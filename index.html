@@ -70,6 +70,15 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .avatar{display:grid;place-items:center;border-radius:50%;background:var(--accent);color:var(--on-accent);font-weight:700;flex:none;line-height:1}
 .avatar.sm{width:26px;height:26px;font-size:12px}
 .avatar.lg{width:68px;height:68px;font-size:26px}
+.avatar.photo{background-color:var(--surface-2);background-size:cover;background-position:center}
+.avatar-btn{border:0;padding:0;cursor:pointer}
+.avatar-btn:hover{filter:brightness(.93)}
+.photo-acts{display:flex;gap:12px;margin-top:6px}
+.color-add{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#cc-wheel{width:40px;height:38px;border:1px solid var(--line);border-radius:10px;padding:3px;background:var(--surface);cursor:pointer}
+#cc-hex{height:38px;width:120px;border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:0 10px;font-size:14px;font-variant-numeric:tabular-nums;color:var(--fg);text-transform:uppercase}
+#cc-hex:focus{outline:none;border-color:var(--accent)}
+.ce-row.custom{padding-top:8px;border-top:1px dashed var(--line)}
 
 /* ---------- my page ---------- */
 .my{max-width:640px;width:100%}
@@ -109,7 +118,7 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .t-date{display:flex;flex-direction:column}
 .t-ym{display:flex;align-items:baseline;gap:6px;font-size:13px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
 .t-ym b{font-size:16px;font-weight:800;color:var(--fg)}
-.t-day{font-family:var(--font-num);font-size:68px;font-weight:800;line-height:1;letter-spacing:-.04em;margin-top:4px}
+.t-day{font-family:var(--font-num);font-size:68px;font-weight:800;line-height:1;letter-spacing:-.04em;margin-top:4px;color:var(--accent)}
 .t-dow{font-size:15px;font-weight:600;margin-top:6px}
 .t-bar{height:3px;background:var(--surface-2);border-radius:2px;overflow:hidden;margin-top:6px}
 .t-bar span{display:block;height:100%;background:var(--accent);border-radius:2px;transition:width .3s}
@@ -363,13 +372,27 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
   <section class="card" aria-labelledby="prof-h">
     <h2 class="card-h" id="prof-h">프로필</h2>
     <div class="prof">
-      <span class="avatar lg" id="my-avatar" aria-hidden="true"></span>
-      <div class="prof-text"><b id="my-name-view"></b><span id="my-bio-view"></span></div>
+      <button class="avatar lg avatar-btn" id="my-avatar" aria-label="프로필 사진 바꾸기"></button>
+      <div class="prof-text"><b id="my-name-view"></b><span id="my-bio-view"></span>
+        <div class="photo-acts"><button class="linkbtn" id="photo-pick">사진 바꾸기</button><button class="linkbtn" id="photo-clear" hidden>사진 지우기</button></div>
+      </div>
+      <input type="file" id="photo-file" accept="image/*" hidden>
     </div>
     <div class="grid2">
       <label class="field">이름<input id="my-name" maxlength="20" placeholder="이름" autocomplete="off"></label>
       <label class="field">한 줄 소개<input id="my-bio" maxlength="40" placeholder="예: 오늘 일은 오늘 끝내기" autocomplete="off"></label>
     </div>
+  </section>
+  <section class="card" aria-labelledby="color-h">
+    <h2 class="card-h" id="color-h">메인 컬러</h2>
+    <p class="note">오늘 날짜 표시와 버튼에 쓰이는 색이에요. 여기서 추가한 색은 카테고리 색으로도 쓸 수 있어요.</p>
+    <div class="ce-colors" id="main-colors" role="radiogroup" aria-label="메인 컬러"></div>
+    <div class="color-add">
+      <input type="color" id="cc-wheel" value="#7FB3D5" aria-label="색상 휠에서 고르기">
+      <input id="cc-hex" maxlength="7" placeholder="#7FB3D5" aria-label="색상 코드" autocomplete="off" spellcheck="false">
+      <button class="btn" id="cc-add">색 추가</button>
+    </div>
+    <span class="err" id="cc-err" hidden></span>
   </section>
   <section class="card" aria-labelledby="cat-h">
     <h2 class="card-h" id="cat-h">카테고리</h2>
@@ -406,6 +429,9 @@ const DOW = ['일', '월', '화', '수', '목', '금', '토'];
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const diffDays = k => Math.round((fromKey(k) - TODAY()) / 864e5);
 const PCOLORS = ['#4F5FD9', '#D9822B', '#A24FCF', '#1F9D74', '#D94F7A', '#2C8FB8'];
+const DEFAULT_MAIN = '#0E7A6A';
+// 전체 색 목록 = 기본 팔레트 + 내가 추가한 색(마지막 줄)
+const allColors = () => (prefs.customColors && prefs.customColors.length ? [...CAT_COLORS, prefs.customColors] : CAT_COLORS);
 // 카테고리 색 목록: 기본 · Pinterest Palette 2026 · coolors 팔레트 두 개
 const CAT_COLORS = [
   ['#4F5FD9', '#2C8FB8', '#1F9D74', '#0E7A6A', '#D9822B', '#D94F7A', '#A24FCF', '#59616C'],
@@ -856,7 +882,7 @@ function renderCats(withEditor = true) {
   ed.hidden = false;
   ed.innerHTML = `<div class="card-h">${p.kind === 'event' ? '일정' : '할 일'} 카테고리 편집</div>
     <label class="field">이름<input id="ce-name" maxlength="12" value="${esc(p.name)}" autocomplete="off"></label>
-    <div class="ce-colors" role="radiogroup" aria-label="색상">${CAT_COLORS.map(row => `<div class="ce-row">${row.map(c =>
+    <div class="ce-colors" role="radiogroup" aria-label="색상">${allColors().map((row, ri) => `<div class="ce-row ${ri >= CAT_COLORS.length ? 'custom' : ''}">${row.map(c =>
       `<button class="ce-c ${c.toLowerCase() === cur ? 'on' : ''}" role="radio" aria-checked="${c.toLowerCase() === cur}" aria-label="색 ${c}" data-cc="${c}" style="--sw:${c}"></button>`).join('')}</div>`).join('')}</div>
     <div class="pop-actions"><button class="btn danger" id="ce-del">삭제</button><span class="grow"></span><button class="btn primary" id="ce-done">완료</button></div>`;
 }
@@ -959,9 +985,68 @@ function applyTheme() {
   else ROOT.setAttribute('data-theme', m);
 }
 const initial = () => (prefs.name || '').trim().slice(0, 1) || '나';
+
+/* 메인 컬러: 연한 색은 글자로 쓸 때 진하게 섞어서 읽히게 */
+function applyMain() {
+  const c = prefs.main, props = ['--accent', '--accent-soft', '--on-accent'];
+  if (!c) { props.forEach(v => ROOT.style.removeProperty(v)); return; }
+  const light = onColor(c) !== '#FFFFFF';
+  ROOT.style.setProperty('--accent', light ? `color-mix(in srgb, ${c} 55%, var(--fg))` : c);
+  ROOT.style.setProperty('--accent-soft', `color-mix(in srgb, ${c} 30%, var(--surface))`);
+  ROOT.style.setProperty('--on-accent', light ? 'var(--surface)' : '#FFFFFF');
+}
+function renderMain() {
+  const cur = (prefs.main || DEFAULT_MAIN).toLowerCase();
+  $('#main-colors').innerHTML = allColors().map((row, ri) => `<div class="ce-row ${ri >= CAT_COLORS.length ? 'custom' : ''}">${row.map(c =>
+    `<button class="ce-c ${c.toLowerCase() === cur ? 'on' : ''}" role="radio" aria-checked="${c.toLowerCase() === cur}" aria-label="색 ${c}" data-main="${c}" style="--sw:${c}"></button>`).join('')}</div>`).join('');
+}
+function setMain(c) {
+  prefs.main = c.toLowerCase() === DEFAULT_MAIN.toLowerCase() ? null : c;
+  savePrefs(); applyMain(); renderMain(); renderAll(); renderProfile();
+}
+function normHex(v) {
+  const m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec((v || '').trim()); if (!m) return null;
+  let h = m[1]; if (h.length === 3) h = h.split('').map(ch => ch + ch).join('');
+  return '#' + h.toUpperCase();
+}
+function addColor() {
+  const err = $('#cc-err'), c = normHex($('#cc-hex').value || $('#cc-wheel').value);
+  if (!c) { err.textContent = '#7FB3D5 처럼 6자리 색상 코드를 넣어 주세요.'; err.hidden = false; return; }
+  err.hidden = true;
+  const known = allColors().some(row => row.some(x => x.toUpperCase() === c));
+  if (!known) { prefs.customColors = [...(prefs.customColors || []), c]; }
+  $('#cc-hex').value = '';
+  setMain(c);
+  if (catEdit) renderCats();
+  toast(known ? '이미 있는 색이라 메인 컬러로 골랐어요' : '색을 추가하고 메인 컬러로 골랐어요');
+}
+function setPhoto(file) {
+  if (!file || !/^image\//.test(file.type)) { toast('이미지 파일을 골라 주세요'); return; }
+  const r = new FileReader();
+  r.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const S = 192, cv = document.createElement('canvas'); cv.width = cv.height = S;
+      const k = Math.max(S / img.width, S / img.height), w = img.width * k, h = img.height * k;
+      cv.getContext('2d').drawImage(img, (S - w) / 2, (S - h) / 2, w, h);
+      prefs.photo = cv.toDataURL('image/jpeg', 0.85); savePrefs(); renderProfile(); toast('프로필 사진을 바꿨어요');
+    };
+    img.onerror = () => toast('이 이미지는 열 수 없어요');
+    img.src = r.result;
+  };
+  r.readAsDataURL(file);
+}
+$('#photo-file').addEventListener('change', e => { setPhoto(e.target.files[0]); e.target.value = ''; });
+$('#cc-wheel').addEventListener('input', e => { $('#cc-hex').value = e.target.value.toUpperCase(); $('#cc-err').hidden = true; });
+$('#cc-hex').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addColor(); } });
 function renderProfile() {
-  $('#rail-avatar').textContent = initial();
-  $('#my-avatar').textContent = initial();
+  ['#rail-avatar', '#my-avatar'].forEach(sel => {
+    const a = $(sel);
+    a.textContent = prefs.photo ? '' : initial();
+    a.style.backgroundImage = prefs.photo ? `url("${prefs.photo}")` : '';
+    a.classList.toggle('photo', !!prefs.photo);
+  });
+  $('#photo-clear').hidden = !prefs.photo;
   $('#my-name-view').textContent = (prefs.name || '').trim() || '이름을 정해 주세요';
   $('#my-bio-view').textContent = (prefs.bio || '').trim() || '한 줄 소개가 아직 없어요';
   document.querySelectorAll('[data-mode]').forEach(b => { const on = b.dataset.mode === (prefs.mode || 'system'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
@@ -972,7 +1057,7 @@ function route() {
   $('#v-my').hidden = v !== 'my';
   document.querySelectorAll('[data-nav]').forEach(a => { const on = a.dataset.nav === v; a.classList.toggle('on', on); if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   if (pop.open) closePop();
-  if (v === 'my') { $('#my-name').value = prefs.name || ''; $('#my-bio').value = prefs.bio || ''; catEdit = null; renderCats(); }
+  if (v === 'my') { $('#my-name').value = prefs.name || ''; $('#my-bio').value = prefs.bio || ''; catEdit = null; renderCats(); renderMain(); }
   renderProfile();
   window.scrollTo(0, 0);
 }
@@ -1002,6 +1087,11 @@ document.addEventListener('click', e => {
     f.dataset.allday = on ? '1' : '0'; adt.classList.toggle('on', on); adt.setAttribute('aria-pressed', on);
     placePop(); return;
   }
+  const mc = e.target.closest('[data-main]');
+  if (mc) { setMain(mc.dataset.main); return; }
+  if (e.target.closest('#cc-add')) { addColor(); return; }
+  if (e.target.closest('#photo-pick') || e.target.closest('#my-avatar')) { $('#photo-file').click(); return; }
+  if (e.target.closest('#photo-clear')) { delete prefs.photo; savePrefs(); renderProfile(); toast('프로필 사진을 지웠어요'); return; }
   const cc = e.target.closest('[data-cc]');
   if (cc) { const p = proj(catEdit); if (p) { p.color = cc.dataset.cc; save(); renderCats(); renderAll(); } return; }
   const cb = e.target.closest('[data-cat]');
@@ -1086,6 +1176,7 @@ state.items = data.items; state.projects = data.projects;
 const t0 = TODAY();
 state.calMonth = new Date(t0.getFullYear(), t0.getMonth(), 1);
 applyTheme();
+applyMain();
 renderAll();
 route();
 setInterval(() => { if (!pop.open) renderToday(); }, 60000);
