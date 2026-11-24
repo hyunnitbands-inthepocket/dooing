@@ -183,7 +183,7 @@ body.row-dragging,body.row-dragging *{cursor:grabbing!important}
 .check svg{width:12px;height:12px}
 .check:hover{color:var(--pc,var(--p0))}
 .check.p1{--pc:var(--p1)} .check.p2{--pc:var(--p2)} .check.p3{--pc:var(--p3)}
-.row.done .check{background:var(--p0);border-color:var(--p0);color:var(--surface)}
+.row.done .check{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .evtime{flex:none;width:58px;font-family:var(--font-num);font-size:12.5px;font-weight:600;color:var(--ev);padding-top:1px;border-right:2px solid var(--c,var(--ev));margin-right:1px}
 .row-main{flex:1;min-width:0;text-align:left;display:flex;flex-direction:column;gap:1px}
 .row-title{font-weight:500;overflow-wrap:anywhere}
@@ -246,7 +246,7 @@ body.row-dragging,body.row-dragging *{cursor:grabbing!important}
 .cchip.ev b{font-family:var(--font-num);font-weight:600;color:var(--ev);margin-right:3px}
 .cchip.tk::before{content:"";display:inline-block;width:8px;height:8px;border:1.5px solid var(--accent);border-radius:50%;margin-right:5px;vertical-align:-1px}
 .cchip.tk.done{color:var(--muted);text-decoration:line-through}
-.cchip.tk.done::before{background:var(--p0);border-color:var(--p0)}
+.cchip.tk.done::before{background:var(--accent);border-color:var(--accent)}
 .tsq{display:inline-grid;grid-template-rows:1fr 1fr;place-items:center;width:21px;height:21px;border:1px solid currentColor;border-radius:5px;font-family:var(--font-num);font-variant-numeric:tabular-nums;font-size:9px;font-weight:700;line-height:1;letter-spacing:0;color:var(--ev);flex:none;padding:1px 0}
 .t-ev .tsq{width:26px;height:26px;font-size:10.5px}
 .t-ev .tm b{font:inherit;color:inherit}
@@ -314,7 +314,7 @@ body.row-dragging,body.row-dragging *{cursor:grabbing!important}
 .cchip.tk[data-tid]{cursor:grab;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none}
 .cchip.tk[data-tid]:hover{background:var(--surface-2)}
 .cchip.tk[data-tid]::before{border-color:color-mix(in srgb,var(--c) 70%,var(--fg))}
-.cchip.tk.done[data-tid]::before{background:var(--p0);border-color:var(--p0)}
+.cchip.tk.done[data-tid]::before{background:var(--accent);border-color:var(--accent)}
 .cchip.clip{background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
 .cchip.chip-lift{opacity:.3}
 .cell.drop{background:var(--accent-soft)}
