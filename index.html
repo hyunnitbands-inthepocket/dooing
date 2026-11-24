@@ -22,7 +22,7 @@ img{max-width:100%}
   --fg:#17202A; --muted:#66727E; --accent:#0E7A6A; --accent-soft:#D8EEE9; --on-accent:#FFFFFF;
   --ev:#3D5BD9; --ev-soft:#E2E7FB;
   --p1:#D64535; --p2:#C98010; --p3:#3D6FD6; --p0:#A3ADB7;
-  --sun:#D64535; --sat:#3D6FD6; --moon:#A3B6D3;
+  --sun:#D64535; --sat:#3D6FD6; --moon:#A3B6D3; --today-bg:#FFFBE3;
   --shadow:0 1px 2px rgb(16 24 32 / .06), 0 10px 28px rgb(16 24 32 / .07);
   --shadow-pop:0 4px 10px rgb(16 24 32 / .08), 0 22px 48px rgb(16 24 32 / .18);
   --font-body:"Pretendard","Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
@@ -33,7 +33,7 @@ img{max-width:100%}
   --fg:#E7EAEF; --muted:#939BAA; --accent:#3FC2AB; --accent-soft:#16372F; --on-accent:#0A1A16;
   --ev:#7F97FF; --ev-soft:#212A4A;
   --p1:#F06A5B; --p2:#EFA53A; --p3:#739CFF; --p0:#5E6776;
-  --sun:#F06A5B; --sat:#739CFF; --moon:#6F84A6;
+  --sun:#F06A5B; --sat:#739CFF; --moon:#6F84A6; --today-bg:#2E2B1C;
   --shadow:0 1px 2px rgb(0 0 0 / .35), 0 10px 28px rgb(0 0 0 / .3);
   --shadow-pop:0 4px 10px rgb(0 0 0 / .4), 0 22px 48px rgb(0 0 0 / .55);
   color-scheme:dark;
@@ -43,7 +43,7 @@ img{max-width:100%}
   --fg:#E7EAEF; --muted:#939BAA; --accent:#3FC2AB; --accent-soft:#16372F; --on-accent:#0A1A16;
   --ev:#7F97FF; --ev-soft:#212A4A;
   --p1:#F06A5B; --p2:#EFA53A; --p3:#739CFF; --p0:#5E6776;
-  --sun:#F06A5B; --sat:#739CFF; --moon:#6F84A6;
+  --sun:#F06A5B; --sat:#739CFF; --moon:#6F84A6; --today-bg:#2E2B1C;
   --shadow:0 1px 2px rgb(0 0 0 / .35), 0 10px 28px rgb(0 0 0 / .3);
   --shadow-pop:0 4px 10px rgb(0 0 0 / .4), 0 22px 48px rgb(0 0 0 / .55);
   color-scheme:dark;
@@ -114,7 +114,7 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .split.wide button svg{width:22px;height:22px}
 
 /* ---------- today box (위젯형, 미니멀) ---------- */
-.today{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:26px 28px;display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px}
+#today{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:26px 28px;display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px}
 .t-date{display:flex;flex-direction:column}
 .t-ym{display:flex;align-items:baseline;gap:6px;font-size:13px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
 .t-ym b{font-size:16px;font-weight:800;color:var(--fg)}
@@ -197,6 +197,7 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .dtop{display:flex;flex-direction:column;align-items:center;min-width:0;margin-bottom:2px}
 .dnum{font-family:var(--font-num);font-weight:600;font-size:13px;width:24px;height:24px;display:grid;place-items:center;border-radius:50%;flex:none}
 .cell.sun .dnum,.cell.hd .dnum{color:var(--sun)} .cell.sat .dnum{color:var(--sat)}
+.cell.today,.cell.today:hover{background:var(--today-bg)}
 .cell.today .dnum{color:var(--accent);font-weight:800}
 .cell.today .dnum.pulse{animation:todayPulse 1.2s ease-out}
 @keyframes todayPulse{
@@ -308,7 +309,7 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 @media (max-width:760px){
-  .today{grid-template-columns:minmax(0,1fr);gap:20px;padding:22px}
+  #today{grid-template-columns:minmax(0,1fr);gap:20px;padding:22px}
   .t-date{display:grid;grid-template-columns:1fr auto;column-gap:12px}
   .t-ym,.t-day,.t-dow{grid-column:1}
   .t-day{font-size:56px}
