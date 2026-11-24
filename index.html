@@ -79,6 +79,23 @@ button{cursor:pointer;background:none;border:0;padding:0}
 #cc-hex{height:38px;width:120px;border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:0 10px;font-size:14px;font-variant-numeric:tabular-nums;color:var(--fg);text-transform:uppercase}
 #cc-hex:focus{outline:none;border-color:var(--accent)}
 .ce-row.custom{padding-top:8px;border-top:1px dashed var(--line)}
+.card-hrow{display:flex;align-items:center;gap:12px}
+.card-hrow .card-h{margin-right:auto}
+.btn.sm{height:28px;padding:0 12px;font-size:12px}
+#main-colors.editing .ce-c{position:relative;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+.ce-x{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--fg);color:var(--bg);font-size:12px;font-weight:700;line-height:1;display:grid;place-items:center;box-shadow:0 0 0 2px var(--surface);cursor:pointer}
+.ce-c.dragging{opacity:.3;transform:scale(.85)}
+.pal-ghost{position:fixed;z-index:70;width:34px;height:34px;border-radius:50%;background:var(--sw);pointer-events:none;transform:translate(-50%,-50%) scale(1.15);box-shadow:var(--shadow-pop),inset 0 0 0 1px rgb(0 0 0 / .1)}
+body.pal-dragging,body.pal-dragging *{cursor:grabbing!important}
+.switch-row{display:flex;align-items:center;gap:12px;cursor:pointer;padding-top:4px;position:relative}
+.switch-row input{position:absolute;opacity:0;width:1px;height:1px}
+.sw-track{width:40px;height:24px;border-radius:999px;background:var(--line);position:relative;flex:none;transition:background .15s}
+.sw-track::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--surface);box-shadow:0 1px 2px rgb(0 0 0 / .25);transition:transform .15s}
+.switch-row input:checked + .sw-track{background:var(--accent)}
+.switch-row input:checked + .sw-track::after{transform:translateX(16px)}
+.switch-row input:focus-visible + .sw-track{outline:2px solid var(--accent);outline-offset:2px}
+.switch-row b{display:block;font-size:13.5px}
+.switch-row small{display:block;font-size:12px;color:var(--muted)}
 
 /* ---------- my page ---------- */
 .my{max-width:640px;width:100%}
@@ -385,8 +402,8 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
     </div>
   </section>
   <section class="card" aria-labelledby="color-h">
-    <h2 class="card-h" id="color-h">메인 컬러</h2>
-    <p class="note">오늘 날짜 표시와 버튼에 쓰이는 색이에요. 여기서 추가한 색은 카테고리 색으로도 쓸 수 있어요.</p>
+    <div class="card-hrow"><h2 class="card-h" id="color-h">메인 컬러</h2><button class="linkbtn" id="pal-reset" hidden>기본 색으로 되돌리기</button><button class="btn sm" id="pal-edit">편집</button></div>
+    <p class="note" id="pal-note"></p>
     <div class="ce-colors" id="main-colors" role="radiogroup" aria-label="메인 컬러"></div>
     <div class="color-add">
       <input type="color" id="cc-wheel" value="#7FB3D5" aria-label="색상 휠에서 고르기">
@@ -394,6 +411,7 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
       <button class="btn" id="cc-add">색 추가</button>
     </div>
     <span class="err" id="cc-err" hidden></span>
+    <label class="switch-row"><input type="checkbox" id="raw-main" role="switch"><span class="sw-track" aria-hidden="true"></span><span><b>고른 색 그대로 쓰기</b><small>끄면 연한 색은 글자로 쓸 때 진하게 맞춰서 읽히게 해요</small></span></label>
   </section>
   <section class="card" aria-labelledby="cat-h">
     <h2 class="card-h" id="cat-h">카테고리</h2>
@@ -432,7 +450,10 @@ const diffDays = k => Math.round((fromKey(k) - TODAY()) / 864e5);
 const PCOLORS = ['#4F5FD9', '#D9822B', '#A24FCF', '#1F9D74', '#D94F7A', '#2C8FB8'];
 const DEFAULT_MAIN = '#0E7A6A';
 // 전체 색 목록 = 기본 팔레트 + 내가 추가한 색(마지막 줄)
-const allColors = () => (prefs.customColors && prefs.customColors.length ? [...CAT_COLORS, prefs.customColors] : CAT_COLORS);
+// 색 목록: 사용자가 순서를 바꾸거나 지우면 prefs.palette에 저장, 아니면 기본 팔레트 + 내가 추가한 색
+const palette = () => prefs.palette || [...CAT_COLORS.flat(), ...(prefs.customColors || [])];
+const setPalette = list => { prefs.palette = list; delete prefs.customColors; savePrefs(); };
+const allColors = () => [palette()];
 // 카테고리 색 목록: 기본 · Pinterest Palette 2026 · coolors 팔레트 두 개
 const CAT_COLORS = [
   ['#4F5FD9', '#2C8FB8', '#1F9D74', '#0E7A6A', '#D9822B', '#D94F7A', '#A24FCF', '#59616C'],
@@ -991,16 +1012,57 @@ const initial = () => (prefs.name || '').trim().slice(0, 1) || '나';
 function applyMain() {
   const c = prefs.main, props = ['--accent', '--accent-soft', '--on-accent'];
   if (!c) { props.forEach(v => ROOT.style.removeProperty(v)); return; }
-  const light = onColor(c) !== '#FFFFFF';
+  const light = !prefs.rawMain && onColor(c) !== '#FFFFFF';
   ROOT.style.setProperty('--accent', light ? `color-mix(in srgb, ${c} 55%, var(--fg))` : c);
   ROOT.style.setProperty('--accent-soft', `color-mix(in srgb, ${c} 30%, var(--surface))`);
-  ROOT.style.setProperty('--on-accent', light ? 'var(--surface)' : '#FFFFFF');
+  ROOT.style.setProperty('--on-accent', light ? 'var(--surface)' : onColor(c));
 }
+let palEdit = false;
 function renderMain() {
-  const cur = (prefs.main || DEFAULT_MAIN).toLowerCase();
-  $('#main-colors').innerHTML = allColors().map((row, ri) => `<div class="ce-row ${ri >= CAT_COLORS.length ? 'custom' : ''}">${row.map(c =>
-    `<button class="ce-c ${c.toLowerCase() === cur ? 'on' : ''}" role="radio" aria-checked="${c.toLowerCase() === cur}" aria-label="색 ${c}" data-main="${c}" style="--sw:${c}"></button>`).join('')}</div>`).join('');
+  const cur = (prefs.main || DEFAULT_MAIN).toLowerCase(), box = $('#main-colors');
+  box.classList.toggle('editing', palEdit);
+  box.innerHTML = `<div class="ce-row">${palette().map(c => palEdit
+    ? `<button class="ce-c" data-pal="${c}" aria-label="색 ${c}, 끌어서 순서 바꾸기" style="--sw:${c}"><span class="ce-x" data-del="${c}" role="button" aria-label="${c} 지우기">×</span></button>`
+    : `<button class="ce-c ${c.toLowerCase() === cur ? 'on' : ''}" role="radio" aria-checked="${c.toLowerCase() === cur}" aria-label="색 ${c}" data-main="${c}" style="--sw:${c}"></button>`).join('')}</div>`;
+  $('#pal-edit').textContent = palEdit ? '완료' : '편집';
+  $('#pal-reset').hidden = !palEdit || !prefs.palette;
+  $('#pal-note').textContent = palEdit
+    ? '동그라미를 끌어서 순서를 바꾸고, ×를 눌러 지워요.'
+    : '오늘 날짜 표시와 버튼에 쓰이는 색이에요. 여기서 추가한 색은 카테고리 색으로도 쓸 수 있어요.';
+  $('#raw-main').checked = !!prefs.rawMain;
 }
+/* 편집 모드: 동그라미 끌어서 순서 바꾸기 (마우스·터치 공통) */
+let palDrag = null;
+$('#main-colors').addEventListener('pointerdown', e => {
+  const el = e.target.closest('[data-pal]');
+  if (!palEdit || !el || e.target.closest('[data-del]') || e.button !== 0) return;
+  e.preventDefault();
+  const g = document.createElement('div'); g.className = 'pal-ghost'; g.style.setProperty('--sw', el.dataset.pal);
+  g.style.left = e.clientX + 'px'; g.style.top = e.clientY + 'px';
+  document.body.appendChild(g); document.body.classList.add('pal-dragging');
+  el.classList.add('dragging'); palDrag = { el, g };
+});
+document.addEventListener('pointermove', e => {
+  if (!palDrag) return;
+  e.preventDefault();
+  const { el, g } = palDrag;
+  g.style.left = e.clientX + 'px'; g.style.top = e.clientY + 'px';
+  const hit = document.elementFromPoint(e.clientX, e.clientY), tgt = hit && hit.closest('[data-pal]');
+  if (!tgt || tgt === el || tgt.parentElement !== el.parentElement) return;
+  const r = tgt.getBoundingClientRect();
+  tgt.parentElement.insertBefore(el, e.clientX < r.left + r.width / 2 ? tgt : tgt.nextSibling);
+});
+function endPalDrag() {
+  if (!palDrag) return;
+  palDrag.g.remove(); palDrag.el.classList.remove('dragging'); document.body.classList.remove('pal-dragging');
+  palDrag = null;
+  const order = [...$('#main-colors').querySelectorAll('[data-pal]')].map(b => b.dataset.pal);
+  if (order.join() !== palette().join()) { setPalette(order); if (catEdit) renderCats(); }
+  renderMain();
+}
+document.addEventListener('pointerup', endPalDrag);
+document.addEventListener('pointercancel', endPalDrag);
+$('#raw-main').addEventListener('change', e => { prefs.rawMain = e.target.checked; savePrefs(); applyMain(); renderAll(); });
 function setMain(c) {
   prefs.main = c.toLowerCase() === DEFAULT_MAIN.toLowerCase() ? null : c;
   savePrefs(); applyMain(); renderMain(); renderAll(); renderProfile();
@@ -1014,8 +1076,8 @@ function addColor() {
   const err = $('#cc-err'), c = normHex($('#cc-hex').value || $('#cc-wheel').value);
   if (!c) { err.textContent = '#7FB3D5 처럼 6자리 색상 코드를 넣어 주세요.'; err.hidden = false; return; }
   err.hidden = true;
-  const known = allColors().some(row => row.some(x => x.toUpperCase() === c));
-  if (!known) { prefs.customColors = [...(prefs.customColors || []), c]; }
+  const known = palette().some(x => x.toUpperCase() === c);
+  if (!known) setPalette([...palette(), c]);
   $('#cc-hex').value = '';
   setMain(c);
   if (catEdit) renderCats();
@@ -1088,6 +1150,10 @@ document.addEventListener('click', e => {
     f.dataset.allday = on ? '1' : '0'; adt.classList.toggle('on', on); adt.setAttribute('aria-pressed', on);
     placePop(); return;
   }
+  const pdel = e.target.closest('[data-del]');
+  if (pdel) { setPalette(palette().filter(x => x !== pdel.dataset.del)); renderMain(); if (catEdit) renderCats(); toast('색을 지웠어요'); return; }
+  if (e.target.closest('#pal-edit')) { palEdit = !palEdit; renderMain(); return; }
+  if (e.target.closest('#pal-reset')) { delete prefs.palette; delete prefs.customColors; savePrefs(); renderMain(); if (catEdit) renderCats(); toast('기본 색 목록으로 되돌렸어요'); return; }
   const mc = e.target.closest('[data-main]');
   if (mc) { setMain(mc.dataset.main); return; }
   if (e.target.closest('#cc-add')) { addColor(); return; }
