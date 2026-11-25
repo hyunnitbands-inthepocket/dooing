@@ -652,6 +652,8 @@ function dateLabel(k) {
   if (n === 0) return '오늘'; if (n === 1) return '내일'; if (n === 2) return '모레'; if (n === -1) return '어제';
   return `${d.getMonth() + 1}월 ${d.getDate()}일`;
 }
+// 하루박스용 날짜 표기: '어제'·'내일'만 말로, 나머지는 월/일 (예: 11/28)
+function boxDate(k) { const n = diffDays(k); if (n === -1) return '어제'; if (n === 1) return '내일'; const d = fromKey(k); return `${d.getMonth() + 1}/${d.getDate()}`; }
 const longDate = k => { const d = fromKey(k); return `${d.getMonth() + 1}월 ${d.getDate()}일 ${DOW[d.getDay()]}요일`; };
 
 const IC = {
@@ -914,7 +916,7 @@ function renderToday() {
     if (!its.length) return ''; // 오늘 할 일이 없는 카테고리는 칩도 숨김
     const rows = its.map(i => {
       const late = !i.done && i.date < tk;
-      const meta = late ? `<span class="t-meta late">${dateLabel(i.date)}</span>` : (i.time ? `<span class="t-meta">${i.time}</span>` : '');
+      const meta = late ? `<span class="t-meta late">${boxDate(i.date)}</span>` : (i.time ? `<span class="t-meta">${i.time}</span>` : '');
       return `<li class="t-item tk ${i.done ? 'done' : ''} ${late ? 'late' : ''}" data-id="${i.id}" style="--c:${g.color};--oc:${onColor(g.color)}"><div class="t-row"><button class="box" data-act="toggle" aria-label="${i.done ? '완료 취소' : '완료로 표시'}">${IC.check}</button><button class="t-title" data-act="edit">${esc(i.title)}</button>${meta}</div><button class="t-del" data-act="del" aria-label="삭제" title="삭제"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9.5 7V4.8c0-.4.3-.8.8-.8h3.4c.5 0 .8.4.8.8V7M6.5 7l.8 12.1c.1.8.7 1.4 1.5 1.4h6.4c.8 0 1.4-.6 1.5-1.4L17.5 7M10 11v6M14 11v6"/></svg></button></li>`;
     }).join('');
     return `<div class="t-block"><button class="t-label" style="--c:${g.color}" data-new="task" data-d="${tk}" data-project="${g.id}" aria-label="${esc(g.name)}에 할 일 추가">${esc(g.name)}<span class="plus" aria-hidden="true">+</span></button>
@@ -932,8 +934,7 @@ function renderToday() {
     const del = '<button class="t-del" data-act="del" aria-label="삭제" title="삭제"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9.5 7V4.8c0-.4.3-.8.8-.8h3.4c.5 0 .8.4.8.8V7M6.5 7l.8 12.1c.1.8.7 1.4 1.5 1.4h6.4c.8 0 1.4-.6 1.5-1.4L17.5 7M10 11v6M14 11v6"/></svg></button>';
     const rows = ups.slice(0, 10).map(x => {
       const p = proj(x.project), c = p ? p.color : 'var(--accent)';
-      const dn = diffDays(x.date), dd = fromKey(x.date), dl = dn === 1 ? '내일' : dn === 2 ? '모레' : `${dd.getMonth() + 1}/${dd.getDate()}`;
-      const when = `<span class="t-meta up">${dl}${x.time ? ' ' + x.time : ''}</span>`;
+      const when = `<span class="t-meta up">${boxDate(x.date)}${x.time ? ' ' + x.time : ''}</span>`;
       return x.type === 'event'
         ? `<li class="t-item t-ev up" data-id="${x.id}"><div class="t-row"><span class="bar" style="--c:${p ? p.color : 'var(--ev)'}"></span>${when}<button class="t-title" data-act="edit">${esc(x.title)}</button></div>${del}</li>`
         : `<li class="t-item tk up" data-id="${x.id}" style="--c:${c};--oc:${onColor(c)}"><div class="t-row"><button class="box" data-act="toggle" aria-label="완료로 표시">${IC.check}</button>${when}<button class="t-title" data-act="edit">${esc(x.title)}</button></div>${del}</li>`;
