@@ -1,5 +1,5 @@
 // dooing 서비스워커 — 앱 껍데기만 오프라인 캐시. 데이터(Supabase)는 항상 네트워크.
-const VER = 'dooing-v1';
+const VER = 'dooing-v2';
 const SHELL = ['./', 'index.html', 'privacy.html', 'manifest.webmanifest',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 const CDN = ['cdn.jsdelivr.net', 'fonts.googleapis.com', 'fonts.gstatic.com'];

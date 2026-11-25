@@ -178,6 +178,9 @@ body.pal-dragging,body.pal-dragging *{cursor:grabbing!important}
   padding-block:calc(24px + env(safe-area-inset-top,0px)) calc(24px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .gate-card{width:min(380px,100%);display:flex;flex-direction:column;gap:22px}
 .gate-logo{margin:0;font-family:var(--font-num);font-size:48px;font-weight:800;letter-spacing:-.05em;line-height:1;color:var(--accent)}
+.brand{align-self:flex-start;display:inline-flex;align-items:center;gap:.28em;font-size:24px;line-height:1;color:var(--fg);text-decoration:none;margin-bottom:-6px}
+.lg-oo{height:.8em;width:.8em;flex:none}.lg-wm{height:.64em;width:calc(.64em*172/52);flex:none}
+.gate-logo{display:flex;align-items:center;gap:.28em}.gate-logo .gate-back{margin-left:8px}
 .gate-tag{margin:0 0 12px;color:var(--muted);font-size:14px}
 .gate .acc-btns{max-width:none;gap:14px}
 .gate .acc-btns>.btn{margin:0}
@@ -506,6 +509,7 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="lg-oo" viewBox="-8 -8 116 116"><circle cx="27" cy="50" r="17" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="73" cy="50" r="21" fill="currentColor"/></symbol><symbol id="lg-wm" viewBox="-4 -4 172 52"><g fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 0V30"/><circle cx="10" cy="20" r="10"/><circle cx="42" cy="20" r="10"/><circle cx="74" cy="20" r="10"/><path d="M96 10V30"/><path d="M109 30V20a10 10 0 0 1 20 0V30"/><circle cx="151" cy="20" r="10"/><path d="M161 10V34c0 4-3 7-8 7H146"/></g><circle cx="96" cy="1.5" r="3.6" fill="currentColor"/></symbol></defs></svg>
 
 <div class="shell">
 <main class="page">
@@ -515,6 +519,7 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
   <button class="rail-login" id="rail-login" data-acc="login">로그인</button>
 </nav>
 <div class="view" id="v-home">
+  <a href="#home" class="brand" aria-label="dooing 홈"><svg class="lg-oo" viewBox="-8 -8 116 116" aria-hidden="true"><use href="#lg-oo"/></svg><svg class="lg-wm" viewBox="-4 -4 172 52" aria-hidden="true"><use href="#lg-wm"/></svg></a>
   <section class="today" id="today" aria-label="오늘"></section>
   <section aria-labelledby="cal-title">
     <div class="cal-h">
@@ -542,6 +547,7 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 </div>
 
 <div class="view my" id="v-my" hidden>
+  <a href="#home" class="brand" aria-label="dooing 홈"><svg class="lg-oo" viewBox="-8 -8 116 116" aria-hidden="true"><use href="#lg-oo"/></svg><svg class="lg-wm" viewBox="-4 -4 172 52" aria-hidden="true"><use href="#lg-wm"/></svg></a>
   <h1 class="my-title">마이페이지</h1>
   <section class="card" aria-labelledby="prof-h">
     <h2 class="card-h" id="prof-h">프로필</h2>
@@ -597,7 +603,7 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 <div class="pop" id="pop" role="dialog" aria-modal="true" aria-labelledby="pop-h" hidden></div>
 <div class="gate" id="gate" role="dialog" aria-modal="true" aria-labelledby="gate-h" hidden>
   <div class="gate-card">
-    <h1 class="gate-logo" id="gate-h" data-acc="to-login" style="cursor:pointer">dooing<button class="gate-back" data-acc="to-login" aria-label="로그인으로 돌아가기" title="로그인으로" hidden><svg viewBox="2 3 18.6 14.5" width="15" height="11.7" aria-hidden="true"><path d="M3 8l6-4.2v8.4z" fill="currentColor"/><path d="M8 8h7a4 4 0 0 1 0 8H7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button></h1>
+    <h1 class="gate-logo" id="gate-h" data-acc="to-login" style="cursor:pointer"><span class="sr">dooing</span><svg class="lg-oo" viewBox="-8 -8 116 116" aria-hidden="true"><use href="#lg-oo"/></svg><svg class="lg-wm" viewBox="-4 -4 172 52" aria-hidden="true"><use href="#lg-wm"/></svg><button class="gate-back" data-acc="to-login" aria-label="로그인으로 돌아가기" title="로그인으로" hidden><svg viewBox="2 3 18.6 14.5" width="15" height="11.7" aria-hidden="true"><path d="M3 8l6-4.2v8.4z" fill="currentColor"/><path d="M8 8h7a4 4 0 0 1 0 8H7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button></h1>
     <div id="gate-body"></div>
     <div class="gate-foot"><a class="linkbtn" href="privacy.html" target="_blank" rel="noopener">개인정보처리방침</a></div>
   </div>
