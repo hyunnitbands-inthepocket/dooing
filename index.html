@@ -639,9 +639,9 @@ const IC_STAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stro
 // '생일' 카테고리 일정은 케이크, '시험' 카테고리 all day 일정은 별
 function evIcon(x) {
   if (x.type !== 'event') return '';
-  const n = (proj(x.project) || {}).name || '';
-  if (n.includes('생일')) return `<span class="ev-ic" role="img" aria-label="생일">${IC_CAKE}</span>`;
-  if (n.includes('시험') && !x.time) return `<span class="ev-ic" role="img" aria-label="시험">${IC_STAR}</span>`;
+  const pr = proj(x.project) || {}, n = pr.name || '', st = pr.color ? ` style="color:${pr.color}"` : ''; // 아이콘은 카테고리 색 그대로
+  if (n.includes('생일')) return `<span class="ev-ic" role="img" aria-label="생일"${st}>${IC_CAKE}</span>`;
+  if (n.includes('시험') && !x.time) return `<span class="ev-ic" role="img" aria-label="시험"${st}>${IC_STAR}</span>`;
   return '';
 }
 const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
