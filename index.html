@@ -166,6 +166,7 @@ body.swiping-row{user-select:none;-webkit-user-select:none}
 /* 할 일: 시간·'어제' 표시를 제목 바로 옆에 */
 .t-item.tk .t-title{flex:0 1 auto}
 .t-item.tk .t-meta{margin-left:-4px}
+.t-item.tk.late .t-row{opacity:.5}
 .t-meta.late{color:var(--p1);font-family:var(--font-body);font-weight:600}
 .t-item.tk{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;border-radius:10px;transition:box-shadow .15s,background .15s}
 .t-item.lifted{position:relative;z-index:2;background:var(--surface);box-shadow:var(--shadow-pop);padding-inline:8px;margin-inline:-8px}
@@ -244,22 +245,17 @@ body.row-dragging,body.row-dragging *{cursor:grabbing!important}
 .cchips{display:flex;flex-direction:column;gap:2px;min-width:0}
 .cchip{display:block;font-size:11.5px;line-height:1.4;padding:1px 5px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cchip.ev{color:var(--fg)}
-.cchip.sq{display:flex;align-items:center;gap:6px;padding:1px 4px}
 .cchip .ct{min-width:0;overflow:hidden;text-overflow:ellipsis}
 .cchip.ev b{font-family:var(--font-num);font-weight:600;color:var(--ev);margin-right:3px}
 .cchip.tk::before{content:"";display:inline-block;width:8px;height:8px;border:1.5px solid var(--accent);border-radius:50%;margin-right:5px;vertical-align:-1px}
 .cchip.tk.done{color:var(--muted);text-decoration:line-through}
 .cchip.tk.done::before{background:var(--accent);border-color:var(--accent)}
-.tsq{display:inline-grid;grid-template-rows:1fr 1fr;place-items:center;width:21px;height:21px;border:1px solid currentColor;border-radius:5px;font-family:var(--font-num);font-variant-numeric:tabular-nums;font-size:9px;font-weight:700;line-height:1;letter-spacing:0;color:var(--ev);flex:none;padding:1px 0}
-.t-ev .tsq{width:26px;height:26px;font-size:10.5px}
 .t-ev .tm b{font:inherit;color:inherit}
 .tseg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;height:32px;background:var(--surface)}
 .tseg button{padding:0 10px;font-size:12px;font-weight:600;color:var(--muted);display:inline-flex;align-items:center;font-variant-numeric:tabular-nums}
 .tseg button + button{border-left:1px solid var(--line)}
 .tseg button.on{color:var(--fg);background:var(--surface-2)}
-.tseg .tsq{width:18px;height:18px;font-size:7.5px;color:currentColor}
 .cmore{font-size:11px;color:var(--muted);padding-left:5px}
-.sqgrid{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;max-width:calc(21px * 3 + 4px * 2);margin:2px auto 0}
 .dots{display:none;gap:3px;justify-content:center;flex-wrap:wrap}
 .dots i{width:5px;height:5px;border-radius:50%;background:var(--accent)}
 .dots i.ev{background:var(--ev)}
@@ -394,7 +390,6 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
     <div class="cal-h">
       <div class="cal-left">
         <div class="tseg" role="group" aria-label="캘린더에 보일 항목"><button data-cv="event">일정</button><button data-cv="task">할 일</button></div>
-        <div class="tseg" id="ts-toggle" role="group" aria-label="일정 시간 표시 방식"><button data-ts="inline" aria-label="시간을 한 줄로 표시">22:00</button><button data-ts="square" aria-label="시간을 정사각형으로 표시"><span class="tsq"><span>22</span><span>00</span></span></button></div>
       </div>
       <div class="cal-mid">
         <button class="arrow" data-cal="-1" aria-label="이전 달"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14.5 6l-6 6 6 6"/></svg></button>
@@ -589,15 +584,15 @@ const lunarHTML = k => {
 
 /* ---------- state ---------- */
 const STORE = 'harupan.v1';
-const state = { items: [], projects: [], calMonth: null, timeStyle: 'inline', calView: 'event' };
-try { if (localStorage.getItem('harupan.ts') === 'square') state.timeStyle = 'square'; } catch (e) {}
+const state = { items: [], projects: [], calMonth: null, calView: 'event' };
+try { localStorage.removeItem('harupan.ts'); } catch (e) {} // 없앤 정사각형 시간 표시 설정 정리
 try { if (localStorage.getItem('harupan.cv') === 'task') state.calView = 'task'; } catch (e) {}
 let clip = null; // 복사해 둔 할 일 { id }
 const taskChip = x => {
   const p = proj(x.project);
   return `<span class="cchip tk ${x.done ? 'done' : ''} ${clip && clip.id === x.id ? 'clip' : ''}" data-tid="${x.id}" style="--c:${p ? p.color : 'var(--accent)'}" title="${esc(x.title)}">${esc(x.title)}</span>`;
 };
-const timeHTML = t => state.timeStyle === 'square' ? `<span class="tsq"><span>${t.slice(0, 2)}</span><span>${t.slice(3, 5)}</span></span>` : `<b>${t}</b>`;
+const timeHTML = t => `<b>${t}</b>`;
 const pop = { open: false, mode: 'day', day: null, type: 'task', editId: null, from: 'day', rect: null };
 
 function seed() {
@@ -759,12 +754,12 @@ function renderToday() {
   const groups = cats('task').map(p => ({ id: p.id, name: p.name, color: p.color }));
   if (all.some(i => gid(i) === '')) groups.push({ id: '', name: '기타', color: 'var(--accent)' });
   const taskBlocks = groups.map(g => {
-    const its = all.filter(i => gid(i) === g.id).sort((a, b) => ((b.date < tk) - (a.date < tk)) || byTask(a, b));
+    const its = all.filter(i => gid(i) === g.id).sort((a, b) => ((a.date < tk) - (b.date < tk)) || byTask(a, b)); // 날짜 지난 할 일은 맨 아래
     if (!its.length) return ''; // 오늘 할 일이 없는 카테고리는 칩도 숨김
     const rows = its.map(i => {
       const late = !i.done && i.date < tk;
       const meta = late ? `<span class="t-meta late">${dateLabel(i.date)}</span>` : (i.time ? `<span class="t-meta">${i.time}</span>` : '');
-      return `<li class="t-item tk ${i.done ? 'done' : ''}" data-id="${i.id}" style="--c:${g.color};--oc:${onColor(g.color)}"><div class="t-row"><button class="box" data-act="toggle" aria-label="${i.done ? '완료 취소' : '완료로 표시'}">${IC.check}</button><button class="t-title" data-act="edit">${esc(i.title)}</button>${meta}</div><button class="t-del" data-act="del" aria-label="삭제" title="삭제"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9.5 7V4.8c0-.4.3-.8.8-.8h3.4c.5 0 .8.4.8.8V7M6.5 7l.8 12.1c.1.8.7 1.4 1.5 1.4h6.4c.8 0 1.4-.6 1.5-1.4L17.5 7M10 11v6M14 11v6"/></svg></button></li>`;
+      return `<li class="t-item tk ${i.done ? 'done' : ''} ${late ? 'late' : ''}" data-id="${i.id}" style="--c:${g.color};--oc:${onColor(g.color)}"><div class="t-row"><button class="box" data-act="toggle" aria-label="${i.done ? '완료 취소' : '완료로 표시'}">${IC.check}</button><button class="t-title" data-act="edit">${esc(i.title)}</button>${meta}</div><button class="t-del" data-act="del" aria-label="삭제" title="삭제"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9.5 7V4.8c0-.4.3-.8.8-.8h3.4c.5 0 .8.4.8.8V7M6.5 7l.8 12.1c.1.8.7 1.4 1.5 1.4h6.4c.8 0 1.4-.6 1.5-1.4L17.5 7M10 11v6M14 11v6"/></svg></button></li>`;
     }).join('');
     return `<div class="t-block"><button class="t-label" style="--c:${g.color}" data-new="task" data-d="${tk}" data-project="${g.id}" aria-label="${esc(g.name)}에 할 일 추가">${esc(g.name)}<span class="plus" aria-hidden="true">+</span></button>
       ${rows ? `<ul class="t-list">${rows}</ul>` : ''}</div>`;
@@ -792,16 +787,14 @@ function renderCal() {
   for (let i = 0; i < n; i++) {
     const d = addDays(start, i), k = key(d), items = dayItems(k).filter(x => x.type === (state.calView === 'task' ? 'task' : 'event'));
     const cls = ['cell', d.getMonth() !== m && 'out', d.getDay() === 0 && 'sun', d.getDay() === 6 && 'sat', holiday(k) && 'hd', k === tk && 'today', pop.open && pop.day === k && 'sel', lunar(k)?.d === 15 && 'fullmoon'].filter(Boolean).join(' ');
-    const taskView = state.calView === 'task', sq = !taskView && state.timeStyle === 'square';
-    const allDay = items.filter(x => !x.time), timed = items.filter(x => x.time);
+    const taskView = state.calView === 'task';
     // all day 하이라이트 색: 이미 연한 색은 그대로, 진한 색은 파스텔로 (비율은 테마별 --hlp / --hls)
     const hl = c => `color-mix(in srgb, ${c} ${/^#/.test(c) && onColor(c) !== '#FFFFFF' ? 'var(--hlp)' : 'var(--hls)'}, transparent)`;
     const adChip = x => { const c = (proj(x.project) || {}).color || 'var(--accent)'; return `<span class="cchip ev ad" style="--hl:${hl(c)}">${evIcon(x)}<span class="ct">${esc(x.title)}</span></span>`; };
-    const chips = taskView ? items.slice(0, 4).map(taskChip).join('') : sq
-      ? allDay.map(adChip).join('') + (timed.length ? `<span class="sqgrid">${timed.map(x => `<span class="tsq" title="${x.time} ${esc(x.title)}"><span>${x.time.slice(0, 2)}</span><span>${x.time.slice(3, 5)}</span></span>`).join('')}</span>` : '')
+    const chips = taskView ? items.slice(0, 4).map(taskChip).join('')
       : items.slice(0, 3).map(x => x.time ? `<span class="cchip ev">${timeHTML(x.time)}${evIcon(x)}<span class="ct">${esc(x.title)}</span></span>` : adChip(x)).join('');
     const lim = taskView ? 4 : 3;
-    const more = !sq && items.length > lim ? `<span class="cmore">+${items.length - lim}개 더</span>` : '';
+    const more = items.length > lim ? `<span class="cmore">+${items.length - lim}개 더</span>` : '';
     const dots = items.slice(0, 4).map(() => taskView ? '<i></i>' : '<i class="ev"></i>').join('');
     html += `<button class="${cls}" data-day="${k}" aria-label="${longDate(k)}${holiday(k) ? ' ' + holiday(k) : ''}, ${taskView ? '할 일' : '일정'} ${items.length}개">
       <span class="dtop"><span class="dnum">${d.getDate()}</span>${holiday(k) ? `<span class="hol">${holiday(k)}</span>` : ''}${lunarHTML(k)}</span>
@@ -921,9 +914,7 @@ function saveForm() {
 /* ---------- render all ---------- */
 function renderAll() {
   renderToday(); renderCal(); renderPop();
-  document.querySelectorAll('[data-ts]').forEach(b => { const on = b.dataset.ts === state.timeStyle; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
   document.querySelectorAll('[data-cv]').forEach(b => { const on = b.dataset.cv === state.calView; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
-  $('#ts-toggle').hidden = state.calView === 'task';
   $('#cal-hint').hidden = state.calView !== 'task';
   renderClipBar();
 }
@@ -1389,8 +1380,6 @@ document.addEventListener('click', e => {
   }
   const day = e.target.closest('[data-day]');
   if (day) { openDay(day.dataset.day, day); return; }
-  const ts = e.target.closest('[data-ts]');
-  if (ts) { state.timeStyle = ts.dataset.ts; try { localStorage.setItem('harupan.ts', state.timeStyle); } catch (err) {} renderAll(); return; }
   const cal = e.target.closest('[data-cal]');
   if (cal) {
     const n = +cal.dataset.cal, t = TODAY(), prev = state.calMonth;
