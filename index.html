@@ -116,6 +116,21 @@ body.pal-dragging,body.pal-dragging *{cursor:grabbing!important}
 .mseg button{padding:6px 16px;border-radius:8px;font-weight:600;font-size:13px;color:var(--muted)}
 .mseg button.on{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgb(0 0 0 / .12)}
 .note{font-size:12px;color:var(--muted);margin:0}
+.acc-lead{font-size:13.5px;margin:0}
+.acc-btns{display:flex;flex-direction:column;gap:8px;max-width:340px}
+.btn.wide{height:42px;font-size:14px;width:100%}
+.btn.kakao{background:#FEE500;border-color:#FEE500;color:#191919}
+.btn.kakao:hover{background:#F5DC00}
+.acc-or{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted)}
+.acc-or::before,.acc-or::after{content:"";flex:1;height:1px;background:var(--line)}
+.acc-email{display:flex;gap:8px}
+.acc-email input{flex:1;min-width:0;height:42px;border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:0 12px;font-size:14px;color:var(--fg)}
+.acc-email input:focus{outline:none;border-color:var(--accent)}
+.acc-email .btn{height:42px}
+.acc-me{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.acc-me b{font-size:14px;overflow-wrap:anywhere}
+.acc-status{font-size:12px;color:var(--muted)}
+.acc-acts{display:flex;gap:8px;flex-wrap:wrap}
 
 /* ---------- split button ---------- */
 .split{display:inline-flex;align-items:stretch;border-radius:11px;background:var(--surface);border:1px solid var(--line);overflow:hidden;box-shadow:0 1px 2px rgb(0 0 0 / .05)}
@@ -375,6 +390,7 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 
@@ -405,13 +421,18 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
     <p class="cal-hint" id="cal-hint" hidden>할 일을 꾹 눌러 다른 날짜로 끌어 옮기거나, 한 번 눌러 복사한 뒤 붙여넣을 날짜를 누르세요.</p>
   </section>
   <div class="foot">
-    <span>예시 데이터로 채워져 있어요. 변경 내용은 이 브라우저에만 저장됩니다.</span>
+    <span id="foot-note">예시 데이터로 채워져 있어요. 변경 내용은 이 브라우저에만 저장됩니다.</span>
+    <a class="linkbtn" href="privacy.html" target="_blank" rel="noopener">개인정보처리방침</a>
     <button class="linkbtn" id="reset">예시 데이터로 되돌리기</button>
   </div>
 </div>
 
 <div class="view my" id="v-my" hidden>
   <h1 class="my-title">마이페이지</h1>
+  <section class="card" aria-labelledby="acc-h">
+    <h2 class="card-h" id="acc-h">계정</h2>
+    <div id="acc-body"></div>
+  </section>
   <section class="card" aria-labelledby="prof-h">
     <h2 class="card-h" id="prof-h">프로필</h2>
     <div class="prof">
@@ -652,7 +673,7 @@ function load() {
   try { const raw = localStorage.getItem(STORE); if (raw) { const v = JSON.parse(raw); if (v && Array.isArray(v.items)) return migrate(v); } } catch (e) {}
   return migrate(seed());
 }
-function save() { try { localStorage.setItem(STORE, JSON.stringify({ items: state.items, projects: state.projects })); } catch (e) {} }
+function save() { try { localStorage.setItem(STORE, JSON.stringify({ items: state.items, projects: state.projects })); } catch (e) {} queueCloudSave(); }
 const proj = id => state.projects.find(p => p.id === id);
 const cats = kind => state.projects.filter(p => p.kind === kind);
 const newId = () => 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -1162,7 +1183,7 @@ function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.ad
 /* ---------- 메뉴 · 마이페이지 ---------- */
 const PREF_KEY = 'harupan.prefs';
 const prefs = (() => { try { return JSON.parse(localStorage.getItem(PREF_KEY)) || {}; } catch (e) { return {}; } })();
-const savePrefs = () => { try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch (e) {} };
+const savePrefs = () => { try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch (e) {} queueCloudSave(); };
 const ROOT = document.documentElement, HOST_THEME = ROOT.getAttribute('data-theme');
 function applyTheme() {
   ROOT.removeAttribute('data-accent');
@@ -1284,7 +1305,7 @@ function route() {
   $('#v-my').hidden = v !== 'my';
   document.querySelectorAll('[data-nav]').forEach(a => { const on = a.dataset.nav === v; a.classList.toggle('on', on); if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   if (pop.open) closePop();
-  if (v === 'my') { $('#my-name').value = prefs.name || ''; $('#my-bio').value = prefs.bio || ''; catEdit = null; renderCats(); renderMain(); }
+  if (v === 'my') { $('#my-name').value = prefs.name || ''; $('#my-bio').value = prefs.bio || ''; catEdit = null; renderCats(); renderMain(); renderAccount(); }
   renderProfile();
   window.scrollTo(0, 0);
 }
@@ -1296,6 +1317,8 @@ document.addEventListener('click', e => {
   if (suppressClick) { suppressClick = false; return; }
   if (openRow && !e.target.closest('.t-del')) { const inside = openRow.contains(e.target); closeSwipe(); if (inside) return; }
   if (e.target.closest('#clip-cancel')) { clip = null; renderAll(); return; }
+  const acc = e.target.closest('[data-acc]');
+  if (acc) { accountAction(acc.dataset.acc, acc); return; }
   const cl = e.target.closest('[data-clip]');
   if (cl) { const id = cl.closest('[data-id]').dataset.id; clip = { id, mode: cl.dataset.clip }; pop.open = false; renderAll(); return; }
   const rp = e.target.closest('[data-rep]');
@@ -1404,6 +1427,106 @@ resetBtn.addEventListener('click', () => {
   pop.open = false; renderAll(); toast('예시 데이터로 되돌렸어요');
 });
 
+/* ---------- 계정 · 클라우드 동기화 (Supabase) ---------- */
+// Supabase 프로젝트 주소와 공개(anon) 키. 비어 있으면 로그인 기능은 꺼진 채로 이 브라우저에만 저장
+const CLOUD_URL = '';
+const CLOUD_KEY = '';
+const CLOUD_HOST = /(^|\.)github\.io$/.test(location.hostname) || ['localhost', '127.0.0.1'].includes(location.hostname);
+const sb = CLOUD_URL && CLOUD_KEY && CLOUD_HOST && window.supabase ? window.supabase.createClient(CLOUD_URL, CLOUD_KEY) : null;
+const cloud = { user: null, timer: null, last: null, status: '', msg: '' };
+const BACK_TO = () => location.origin + location.pathname + '#my';
+
+function queueCloudSave() { if (!sb || !cloud.user) return; clearTimeout(cloud.timer); cloud.timer = setTimeout(pushCloud, 800); }
+async function pushCloud() {
+  if (!sb || !cloud.user) return;
+  clearTimeout(cloud.timer);
+  const ts = new Date().toISOString();
+  const { error } = await sb.from('user_data').upsert({ user_id: cloud.user.id, data: { items: state.items, projects: state.projects }, prefs, updated_at: ts });
+  if (!error) cloud.last = ts;
+  cloud.status = error ? '계정에 저장하지 못했어요. 인터넷 연결을 확인해 주세요.' : '계정에 저장됨';
+  renderAccount();
+}
+async function pullCloud(first) {
+  if (!sb || !cloud.user) return;
+  const { data: row, error } = await sb.from('user_data').select('data, prefs, updated_at').eq('user_id', cloud.user.id).maybeSingle();
+  if (error) { cloud.status = '계정 데이터를 불러오지 못했어요. 잠시 후 다시 열어 주세요.'; renderAccount(); return; }
+  if (!row) {
+    // 첫 로그인: 이 기기에 있던 데이터를 계정으로 옮김
+    const meta = cloud.user.user_metadata || {};
+    if (!prefs.name && (meta.full_name || meta.name || meta.nickname)) { prefs.name = meta.full_name || meta.name || meta.nickname; renderProfile(); }
+    if (first) { await pushCloud(); toast('이 기기의 할 일과 일정을 계정에 옮겼어요'); }
+    return;
+  }
+  if (cloud.last && row.updated_at <= cloud.last) return;
+  if (first) { try { localStorage.setItem(STORE + '.before-login', JSON.stringify({ items: state.items, projects: state.projects })); } catch (e) {} }
+  const v = migrate({ items: [], projects: [], ...(row.data || {}) });
+  state.items = v.items; state.projects = v.projects;
+  Object.keys(prefs).forEach(k => delete prefs[k]); Object.assign(prefs, row.prefs || {});
+  cloud.last = row.updated_at;
+  try { localStorage.setItem(STORE, JSON.stringify({ items: state.items, projects: state.projects })); localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch (e) {}
+  applyTheme(); applyMain(); renderAll(); renderProfile();
+  if (!$('#v-my').hidden) { renderCats(); renderMain(); }
+  cloud.status = '계정에 저장됨'; renderAccount();
+  if (first) toast('계정에 저장된 할 일과 일정을 불러왔어요');
+}
+function renderAccount() {
+  const box = $('#acc-body'), note = $('#foot-note');
+  if (note) note.textContent = cloud.user ? `${cloud.user.email || '내 계정'}으로 로그인됨 · 할 일과 일정이 계정에 저장돼요.` : '예시 데이터로 채워져 있어요. 변경 내용은 이 브라우저에만 저장됩니다.';
+  if (!box) return;
+  if (!sb) {
+    box.innerHTML = !CLOUD_HOST
+      ? '<p class="acc-lead">이 미리보기에서는 로그인을 쓸 수 없어요. 로그인은 배포 사이트에서 돼요.</p><a class="linkbtn" href="https://hyunnitbands-inthepocket.github.io/harupan/" target="_blank" rel="noopener">배포 사이트 열기</a>'
+      : '<p class="acc-lead">로그인 기능을 준비하고 있어요. 지금은 이 브라우저에만 저장돼요.</p>';
+    return;
+  }
+  if (!cloud.user) {
+    box.innerHTML = `<p class="acc-lead">로그인하면 할 일과 일정이 계정에 저장돼서 폰이든 컴퓨터든 똑같이 볼 수 있어요.</p>
+      <div class="acc-btns">
+        <button class="btn wide kakao" data-acc="kakao">카카오로 계속하기</button>
+        <button class="btn wide" data-acc="google">Google로 계속하기</button>
+        <div class="acc-or">또는 이메일</div>
+        <div class="acc-email"><input id="acc-email" type="email" placeholder="name@example.com" autocomplete="email" aria-label="이메일"><button class="btn" data-acc="email">로그인 링크 받기</button></div>
+        ${cloud.msg ? `<span class="acc-status">${esc(cloud.msg)}</span>` : ''}
+      </div>
+      <span class="acc-status">처음이면 로그인하면서 바로 가입돼요. 이 기기에 있던 데이터는 계정으로 옮겨져요.</span>`;
+    return;
+  }
+  box.innerHTML = `<div class="acc-me"><b>${esc(cloud.user.email || '내 계정')}</b><span class="acc-status">${esc(cloud.status || '')}</span></div>
+    <div class="acc-acts"><button class="btn" data-acc="logout">로그아웃</button><button class="btn danger" data-acc="delete">회원 탈퇴</button></div>`;
+}
+async function accountAction(a, el) {
+  if (!sb) return;
+  if (a === 'kakao' || a === 'google') {
+    const { error } = await sb.auth.signInWithOAuth({ provider: a, options: { redirectTo: BACK_TO() } });
+    if (error) toast('로그인을 시작하지 못했어요: ' + error.message);
+    return;
+  }
+  if (a === 'email') {
+    const email = ($('#acc-email').value || '').trim();
+    if (!/^\S+@\S+\.\S+$/.test(email)) { cloud.msg = 'name@example.com 처럼 이메일 주소를 넣어 주세요.'; renderAccount(); return; }
+    const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: BACK_TO() } });
+    cloud.msg = error ? '메일을 보내지 못했어요: ' + error.message : `${email}로 로그인 링크를 보냈어요. 메일함에서 링크를 눌러 주세요.`;
+    renderAccount(); return;
+  }
+  if (a === 'logout') { await pushCloud(); await sb.auth.signOut(); toast('로그아웃했어요. 이 기기에는 마지막 데이터가 남아 있어요'); return; }
+  if (a === 'delete') {
+    if (!el.dataset.armed) { el.dataset.armed = '1'; el.classList.add('armed'); el.textContent = '한 번 더 누르면 계정과 데이터가 모두 지워져요'; return; }
+    const { error } = await sb.rpc('delete_my_account');
+    if (error) { toast('탈퇴하지 못했어요: ' + error.message); return; }
+    await sb.auth.signOut(); toast('탈퇴했어요. 계정과 계정에 저장된 데이터를 지웠어요');
+  }
+}
+if (sb) {
+  sb.auth.onAuthStateChange((event, session) => {
+    const u = session ? session.user : null, prev = cloud.user && cloud.user.id;
+    cloud.user = u;
+    if (u && u.id !== prev) { cloud.last = null; cloud.msg = ''; setTimeout(() => pullCloud(true), 0); }
+    if (!u) cloud.status = '';
+    renderAccount();
+  });
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && cloud.user) pullCloud(false); });
+}
+
 /* ---------- boot ---------- */
 const data = load();
 state.items = data.items; state.projects = data.projects;
@@ -1413,6 +1536,7 @@ applyTheme();
 applyMain();
 renderAll();
 route();
+renderAccount();
 setInterval(() => { if (!pop.open) renderToday(); }, 60000);
 })();
 </script>
