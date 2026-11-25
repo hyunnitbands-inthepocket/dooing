@@ -297,6 +297,9 @@ body.row-dragging,body.row-dragging *{cursor:grabbing!important}
 .cat-chips{display:flex;flex-wrap:wrap;gap:8px}
 .cat-chip{display:inline-flex;align-items:center;gap:7px;padding:6px 13px 6px 10px;border-radius:999px;border:1px solid var(--line);font-size:13px;font-weight:600;background:var(--surface)}
 .cat-chip:hover{background:var(--surface-2)}
+.cat-chip[data-cat]{touch-action:none;user-select:none;-webkit-user-select:none}
+.cat-chip.dragging{opacity:.45;border-style:dashed;cursor:grabbing}
+body.cat-dragging,body.cat-dragging *{cursor:grabbing!important}
 .cat-chip .cdot{width:12px;height:12px;border-radius:50%;background:var(--c);box-shadow:inset 0 0 0 1px rgb(0 0 0 / .1)}
 .cat-chip.on{border-color:var(--fg)}
 .cat-chip.add{width:32px;height:32px;padding:0;justify-content:center;color:var(--muted);border-style:dashed;font-size:16px;font-weight:500}
@@ -794,11 +797,11 @@ function formHTML() {
       ${pop.type === 'event' ? `<button type="button" class="allday ${adOn ? 'on' : ''}" data-allday-toggle aria-pressed="${adOn}">all day</button>` : ''}
     </div>
     <div class="form" id="form" data-type="${pop.type}" data-allday="${adOn ? 1 : 0}" style="display:flex;flex-direction:column;gap:12px">
-      <label class="field title">제목<input id="f-title" value="${esc(v.title)}" placeholder="${pop.type === 'event' ? '예: 팀 미팅 오후 3시' : '예: 보고서 제출 !1'}" autocomplete="off"></label>
+      <label class="field">카테고리<select id="f-project">${projOpts}</select></label>
+      <label class="field title">제목<input id="f-title" value="${esc(v.title)}" placeholder="${pop.type === 'event' ? '예: 팀 미팅 오후 3시' : '예: 보고서 제출'}" autocomplete="off"></label>
       <div class="hintline">${pop.type === 'event' ? '시작 시간을 비우면 all day로 저장돼요' : "제목에 '내일', '#업무'처럼 적어도 알아서 채워요"}</div>
       <div class="grid2">
         <label class="field">날짜<input type="date" id="f-date" value="${v.date || ''}"></label>
-        <label class="field">카테고리<select id="f-project">${projOpts}</select></label>
       </div>
       <div class="grid2" data-timefield>
         <label class="field"><span data-only="event">시작 시간</span><span data-only="task">마감 시간 (선택)</span><input type="time" id="f-time" value="${v.time || ''}"></label>
@@ -1005,6 +1008,42 @@ function endSwipe(e) {
 }
 document.addEventListener('pointerup', endSwipe);
 document.addEventListener('pointercancel', () => endSwipe(null));
+
+/* ---------- 마이페이지: 카테고리 칩 끌어서 순서 바꾸기 ---------- */
+let catDrag = null;
+document.addEventListener('pointerdown', e => {
+  const chip = e.target.closest('.cat-chip[data-cat]');
+  if (!chip || e.button !== 0) return;
+  catDrag = { chip, x: e.clientX, y: e.clientY, on: false };
+});
+document.addEventListener('pointermove', e => {
+  if (!catDrag) return;
+  const { chip } = catDrag;
+  if (!catDrag.on) {
+    if (Math.hypot(e.clientX - catDrag.x, e.clientY - catDrag.y) < 6) return;
+    catDrag.on = true; chip.classList.add('dragging'); document.body.classList.add('cat-dragging');
+  }
+  e.preventDefault();
+  const hit = document.elementFromPoint(e.clientX, e.clientY), tgt = hit && hit.closest('.cat-chip[data-cat]');
+  if (!tgt || tgt === chip || tgt.parentElement !== chip.parentElement) return;
+  const r = tgt.getBoundingClientRect();
+  const before = r.top > e.clientY || (e.clientY <= r.bottom && e.clientX < r.left + r.width / 2);
+  chip.parentElement.insertBefore(chip, before ? tgt : tgt.nextSibling);
+});
+function endCatDrag() {
+  if (!catDrag) return;
+  const { chip, on } = catDrag; catDrag = null;
+  if (!on) return;
+  chip.classList.remove('dragging'); document.body.classList.remove('cat-dragging');
+  suppressClick = true; setTimeout(() => { suppressClick = false; }, 350);
+  const kind = chip.parentElement.id.replace('cats-', '');
+  const ids = [...chip.parentElement.querySelectorAll('.cat-chip[data-cat]')].map(c => c.dataset.cat);
+  const byId = Object.fromEntries(state.projects.map(p => [p.id, p]));
+  state.projects = [...state.projects.filter(p => p.kind !== kind), ...ids.map(id => byId[id]).filter(Boolean)];
+  save(); renderCats(); renderAll();
+}
+document.addEventListener('pointerup', endCatDrag);
+document.addEventListener('pointercancel', endCatDrag);
 
 /* ---------- 오늘로 돌아가기 애니메이션 ---------- */
 const calmMotion = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
