@@ -946,7 +946,7 @@ function renderToday() {
       <div class="t-ym"><span>${t.getFullYear()}</span><b>${pad(t.getMonth() + 1)}</b></div>
       <div class="t-day ${holiday(tk) ? 'hd' : ''}" ${holiday(tk) ? `title="${holiday(tk)}"` : ''}>${t.getDate()}</div>
       <div class="t-dow">${DOW[t.getDay()]}요일</div>
-      <div class="t-add"><div class="msplit"><button data-new="task" data-d="${tk}">+ 할 일</button><span class="div"></span><button data-new="event" data-d="${tk}">+ 일정</button></div></div>
+      <div class="t-add"><div class="msplit"><button data-new="event" data-d="${tk}">+ 일정</button><span class="div"></span><button data-new="task" data-d="${tk}">+ 할 일</button></div></div>
     </div>
     <div class="t-blocks">${evBlock}${taskBlocks}${upBlock}</div>`;
 }
