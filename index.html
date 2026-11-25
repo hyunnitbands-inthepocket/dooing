@@ -143,7 +143,7 @@ body.pal-dragging,body.pal-dragging *{cursor:grabbing!important}
 .agree{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
 .agree a{color:inherit;text-decoration:underline}
 .agree.bad{color:var(--p1)}
-.gate-sub{margin:0 0 4px;font-size:18px;font-weight:700;text-align:center}
+.gate-sub{margin:0 0 4px;font-size:18px;font-weight:700}
 .gate .acc-btns .gate-links{margin:2px 0 6px}
 .gate .acc-status{text-align:center}
 .acc-email{display:flex;gap:8px}
@@ -521,7 +521,7 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 <div class="pop" id="pop" role="dialog" aria-modal="true" aria-labelledby="pop-h" hidden></div>
 <div class="gate" id="gate" role="dialog" aria-modal="true" aria-labelledby="gate-h" hidden>
   <div class="gate-card">
-    <h1 class="gate-logo" id="gate-h">dooing</h1>
+    <h1 class="gate-logo" id="gate-h" data-acc="to-login" style="cursor:pointer">dooing</h1>
     <div id="gate-body"></div>
     <div class="gate-links stack"><button class="linkbtn" data-acc="guest">로그인 없이 둘러보기</button><a class="linkbtn" href="privacy.html" target="_blank" rel="noopener">개인정보처리방침</a></div>
   </div>
@@ -1597,7 +1597,6 @@ function signupFormHTML() {
       <button class="btn primary wide" type="submit">가입하고 인증 메일 받기</button>
     </form>
     ${msgHTML()}
-    <div class="gate-links"><button class="linkbtn" data-acc="to-login">이미 계정이 있어요</button></div>
   </div>`;
 }
 function recoverFormHTML() {
