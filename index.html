@@ -554,8 +554,8 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
   </section>
   <div class="my-pair">
   <section class="plain" aria-labelledby="late-h">
-    <h2 class="card-h" id="late-h">지난 할 일</h2>
-    <div class="mseg" role="group" aria-label="완료하지 못한 지난 할 일 표시">
+    <h2 class="card-h" id="late-h">표시 범위</h2>
+    <div class="mseg" role="group" aria-label="오늘 박스에 띄울 지난 할 일과 예정된 일정의 범위">
       <button data-late="1">어제</button><button data-late="2">그저께</button><button data-late="all">2주</button><button data-late="off">표시 안 함</button>
     </div>
   </section>
@@ -884,7 +884,8 @@ const listHTML = (arr, opt) => `<ul class="list">${arr.map(i => rowHTML(i, opt))
 /* ---------- today box ---------- */
 function renderToday() {
   const t = TODAY(), tk = key(t);
-  const lateOpt = prefs.late || 'all', lateFrom = key(addDays(t, -(/^\d+$/.test(lateOpt) ? Number(lateOpt) : 14))); // '모두'도 최대 2주 전까지
+  const lateOpt = prefs.late || 'all', span = lateOpt === 'off' ? 0 : /^\d+$/.test(lateOpt) ? Number(lateOpt) : 14; // 설정(어제/그저께/2주/표시 안 함)이 지난 할 일과 예정된 일정의 범위를 함께 정함
+  const lateFrom = key(addDays(t, -span));
   const overdue = lateOpt === 'off' ? [] : state.items.filter(i => i.type === 'task' && !i.done && i.date && i.date < tk && i.date >= lateFrom);
   const tasks = state.items.filter(i => i.date === tk && i.type === 'task');
   const events = dayItems(tk).filter(i => i.type === 'event');
@@ -916,9 +917,9 @@ function renderToday() {
 
   // 오늘 아무것도 없으면 빈 채로 두지 않고 앞으로 예정된 일정·할 일을 보여줌
   let upBlock = '';
-  if (!evRows && !taskBlocks) {
+  if (!evRows && !taskBlocks && span > 0) {
     const ups = [];
-    for (let n = 1; n <= 14 && ups.length < 5; n++) { // 오늘로부터 앞으로 2주까지
+    for (let n = 1; n <= span && ups.length < 5; n++) {
       const k = key(addDays(t, n));
       dayItems(k).filter(x => !x.done).forEach(x => ups.push({ ...x, date: k }));
     }
