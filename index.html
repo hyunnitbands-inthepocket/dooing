@@ -1429,11 +1429,11 @@ resetBtn.addEventListener('click', () => {
 
 /* ---------- 계정 · 클라우드 동기화 (Supabase) ---------- */
 // Supabase 프로젝트 주소와 공개(anon) 키. 비어 있으면 로그인 기능은 꺼진 채로 이 브라우저에만 저장
-const CLOUD_URL = '';
-const CLOUD_KEY = '';
+const CLOUD_URL = 'https://wskgoteitvfcbqbyerhg.supabase.co';
+const CLOUD_KEY = 'sb_publishable_8Ra6385EIPcvsj9jMOebQw_h-XIkD0k'; // 공개(publishable) 키: 웹에 노출돼도 되는 키. 데이터는 RLS로 본인 것만 접근
 const CLOUD_HOST = /(^|\.)github\.io$/.test(location.hostname) || ['localhost', '127.0.0.1'].includes(location.hostname);
 const sb = CLOUD_URL && CLOUD_KEY && CLOUD_HOST && window.supabase ? window.supabase.createClient(CLOUD_URL, CLOUD_KEY) : null;
-const cloud = { user: null, timer: null, last: null, status: '', msg: '' };
+const cloud = { user: null, timer: null, last: null, status: '', msg: '', providers: {} };
 const BACK_TO = () => location.origin + location.pathname + '#my';
 
 function queueCloudSave() { if (!sb || !cloud.user) return; clearTimeout(cloud.timer); cloud.timer = setTimeout(pushCloud, 800); }
@@ -1482,9 +1482,9 @@ function renderAccount() {
   if (!cloud.user) {
     box.innerHTML = `<p class="acc-lead">로그인하면 할 일과 일정이 계정에 저장돼서 폰이든 컴퓨터든 똑같이 볼 수 있어요.</p>
       <div class="acc-btns">
-        <button class="btn wide kakao" data-acc="kakao">카카오로 계속하기</button>
-        <button class="btn wide" data-acc="google">Google로 계속하기</button>
-        <div class="acc-or">또는 이메일</div>
+        ${cloud.providers.kakao ? '<button class="btn wide kakao" data-acc="kakao">카카오로 계속하기</button>' : ''}
+        ${cloud.providers.google ? '<button class="btn wide" data-acc="google">Google로 계속하기</button>' : ''}
+        ${cloud.providers.kakao || cloud.providers.google ? '<div class="acc-or">또는 이메일</div>' : ''}
         <div class="acc-email"><input id="acc-email" type="email" placeholder="name@example.com" autocomplete="email" aria-label="이메일"><button class="btn" data-acc="email">로그인 링크 받기</button></div>
         ${cloud.msg ? `<span class="acc-status">${esc(cloud.msg)}</span>` : ''}
       </div>
@@ -1517,6 +1517,9 @@ async function accountAction(a, el) {
   }
 }
 if (sb) {
+  // Supabase에서 켜 둔 로그인 방법(카카오·Google)만 버튼으로 보여 주기
+  fetch(CLOUD_URL + '/auth/v1/settings', { headers: { apikey: CLOUD_KEY } })
+    .then(r => r.json()).then(st => { cloud.providers = st.external || {}; renderAccount(); }).catch(() => {});
   sb.auth.onAuthStateChange((event, session) => {
     const u = session ? session.user : null, prev = cloud.user && cloud.user.id;
     cloud.user = u;
