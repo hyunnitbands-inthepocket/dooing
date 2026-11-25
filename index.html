@@ -1272,13 +1272,14 @@ const initial = () => (prefs.name || '').trim().slice(0, 1) || '나';
 
 /* 메인 컬러: 연한 색은 글자로 쓸 때 진하게 섞어서 읽히게 */
 function applyMain() {
-  const c = prefs.main || DEFAULT_MAIN, props = ['--accent', '--accent-soft', '--on-accent'];
+  const gated = document.body.classList.contains('gated'); // 로그인 전 첫 화면은 저장된 색과 상관없이 기본색
+  const c = gated ? DEFAULT_MAIN : (prefs.main || DEFAULT_MAIN), props = ['--accent', '--accent-soft', '--on-accent'];
   // 메인 컬러의 보색(색상환 반대편): '예정' 표시에 씀
   { const n = parseInt(c.slice(1), 16), r = (n >> 16) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
     let h = d === 0 ? 0 : mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h = Math.round(((h * 60 + 360) % 360 + 180) % 360);
     const l = (mx + mn) / 2, sat = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
     ROOT.style.setProperty('--comp-h', h); ROOT.style.setProperty('--comp-s', Math.round(Math.min(70, Math.max(35, sat * 100))) + '%'); ROOT.style.setProperty('--comp-l', Math.round(Math.min(70, l * 100)) + '%'); }
-  const light = !(prefs.main ? prefs.rawMain : true) && onColor(c) !== '#FFFFFF';
+  const light = !(gated || !prefs.main ? true : prefs.rawMain) && onColor(c) !== '#FFFFFF';
   ROOT.style.setProperty('--accent', light ? `color-mix(in srgb, ${c} 55%, var(--fg))` : c);
   ROOT.style.setProperty('--accent-soft', `color-mix(in srgb, ${c} 30%, var(--surface))`);
   ROOT.style.setProperty('--on-accent', light ? 'var(--surface)' : onColor(c));
@@ -1621,7 +1622,9 @@ function recoverFormHTML() {
 function renderGate() {
   const g = $('#gate'); if (!g) return;
   const show = !!sb && cloud.ready && (cloud.mode === 'recover' || (!cloud.user && !isGuest()));
+  const was = document.body.classList.contains('gated');
   g.hidden = !show; document.body.classList.toggle('gated', show);
+  if (was !== show) applyMain();
   if (!show) return;
   const m = cloud.mode;
   $('#gate-body').innerHTML = m === 'signup' ? signupFormHTML() : m === 'recover' ? recoverFormHTML() : loginFormHTML();
