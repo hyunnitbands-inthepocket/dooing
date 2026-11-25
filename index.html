@@ -116,6 +116,10 @@ body.pal-dragging,body.pal-dragging *{cursor:grabbing!important}
 .my{max-width:640px;width:100%}
 .my-title{margin:0;font-size:24px;font-weight:700}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:24px 26px;display:flex;flex-direction:column;gap:16px}
+.my-pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;padding:0 4px}
+.plain{display:flex;flex-direction:column;gap:10px;min-width:0}
+.plain .mseg{display:flex;flex-wrap:wrap;align-self:stretch}
+.plain .mseg button{flex:1 1 auto;padding:6px 8px;white-space:nowrap}
 .card-h{margin:0;font-size:13px;font-weight:700;color:var(--muted)}
 .prof{display:flex;align-items:center;gap:16px;min-width:0}
 .prof-text{display:flex;flex-direction:column;min-width:0}
@@ -510,6 +514,26 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
       <label class="field">한 줄 소개<input id="my-bio" maxlength="40" placeholder="예: 오늘 일은 오늘 끝내기" autocomplete="off"></label>
     </div>
   </section>
+  <section class="card" aria-labelledby="cat-h">
+    <h2 class="card-h" id="cat-h">카테고리</h2>
+    <div class="cat-group"><div class="cat-label">일정</div><div class="cat-chips" id="cats-event"></div></div>
+    <div class="cat-group"><div class="cat-label">할 일</div><div class="cat-chips" id="cats-task"></div></div>
+    <div class="cat-editor" id="cat-editor" hidden></div>
+  </section>
+  <div class="my-pair">
+  <section class="plain" aria-labelledby="late-h">
+    <h2 class="card-h" id="late-h">지난 할 일</h2>
+    <div class="mseg" role="group" aria-label="완료하지 못한 지난 할 일 표시">
+      <button data-late="1">어제</button><button data-late="2">그저께</button><button data-late="all">모두</button><button data-late="off">표시 안 함</button>
+    </div>
+  </section>
+  <section class="plain" aria-labelledby="mode-h">
+    <h2 class="card-h" id="mode-h">화면 모드</h2>
+    <div class="mseg" role="group" aria-label="화면 모드">
+      <button data-mode="system">시스템</button><button data-mode="light">라이트</button><button data-mode="dark">다크</button>
+    </div>
+  </section>
+  </div>
   <section class="card" aria-labelledby="color-h">
     <div class="card-hrow"><h2 class="card-h" id="color-h">메인 컬러</h2><button class="linkbtn" id="pal-reset" hidden>기본 색으로 되돌리기</button><button class="btn sm" id="pal-edit">편집</button></div>
     <div class="ce-colors" id="main-colors" role="radiogroup" aria-label="메인 컬러"></div>
@@ -520,24 +544,6 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
     </div>
     <span class="err" id="cc-err" hidden></span>
     <label class="switch-row"><input type="checkbox" id="raw-main" role="switch"><span class="sw-track" aria-hidden="true"></span><span><b>고른 색 그대로 쓰기</b></span></label>
-  </section>
-  <section class="card" aria-labelledby="cat-h">
-    <h2 class="card-h" id="cat-h">카테고리</h2>
-    <div class="cat-group"><div class="cat-label">일정</div><div class="cat-chips" id="cats-event"></div></div>
-    <div class="cat-group"><div class="cat-label">할 일</div><div class="cat-chips" id="cats-task"></div></div>
-    <div class="cat-editor" id="cat-editor" hidden></div>
-  </section>
-  <section class="card" aria-labelledby="late-h">
-    <h2 class="card-h" id="late-h">지난 할 일</h2>
-    <div class="mseg" role="group" aria-label="완료하지 못한 지난 할 일 표시">
-      <button data-late="1">어제</button><button data-late="2">그저께</button><button data-late="all">모두</button><button data-late="off">표시 안 함</button>
-    </div>
-  </section>
-  <section class="card" aria-labelledby="mode-h">
-    <h2 class="card-h" id="mode-h">화면 모드</h2>
-    <div class="mseg" role="group" aria-label="화면 모드">
-      <button data-mode="system">시스템</button><button data-mode="light">라이트</button><button data-mode="dark">다크</button>
-    </div>
   </section>
   <div class="my-foot" id="acc-body"></div>
 </div>
