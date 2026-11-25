@@ -131,6 +131,16 @@ body.pal-dragging,body.pal-dragging *{cursor:grabbing!important}
 .acc-me b{font-size:14px;overflow-wrap:anywhere}
 .acc-status{font-size:12px;color:var(--muted)}
 .acc-acts{display:flex;gap:8px;flex-wrap:wrap}
+/* 처음 화면: 로그인(회원가입) */
+.gate{position:fixed;inset:0;z-index:80;background:var(--bg);display:grid;place-items:center;overflow:auto;
+  padding-block:calc(24px + env(safe-area-inset-top,0px)) calc(24px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.gate-card{width:min(380px,100%);display:flex;flex-direction:column;gap:14px}
+.gate-logo{margin:0;font-family:var(--font-num);font-size:48px;font-weight:800;letter-spacing:-.05em;line-height:1;color:var(--accent)}
+.gate-tag{margin:0 0 12px;color:var(--muted);font-size:14px}
+.gate .acc-btns{max-width:none}
+.gate-note{margin:4px 0 0;font-size:12px;color:var(--muted)}
+.gate-links{display:flex;gap:16px;flex-wrap:wrap}
+body.gated{overflow:hidden}
 
 /* ---------- split button ---------- */
 .split{display:inline-flex;align-items:stretch;border-radius:11px;background:var(--surface);border:1px solid var(--line);overflow:hidden;box-shadow:0 1px 2px rgb(0 0 0 / .05)}
@@ -478,6 +488,15 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 
 <div class="pop-back" id="popback" hidden></div>
 <div class="pop" id="pop" role="dialog" aria-modal="true" aria-labelledby="pop-h" hidden></div>
+<div class="gate" id="gate" role="dialog" aria-modal="true" aria-labelledby="gate-h" hidden>
+  <div class="gate-card">
+    <h1 class="gate-logo" id="gate-h">dooing</h1>
+    <p class="gate-tag">오늘 할 일과 일정, 한 달을 한 화면에서</p>
+    <div id="gate-body"></div>
+    <p class="gate-note">처음이면 로그인하면서 바로 가입돼요.</p>
+    <div class="gate-links"><button class="linkbtn" data-acc="guest">로그인 없이 둘러보기</button><a class="linkbtn" href="privacy.html" target="_blank" rel="noopener">개인정보처리방침</a></div>
+  </div>
+</div>
 <div class="toast" id="toast" role="status"></div>
 <div class="clipbar" id="clipbar" role="status" hidden><span id="clip-text"></span><button id="clip-cancel">취소</button></div>
 
@@ -1433,8 +1452,10 @@ const CLOUD_URL = 'https://wskgoteitvfcbqbyerhg.supabase.co';
 const CLOUD_KEY = 'sb_publishable_8Ra6385EIPcvsj9jMOebQw_h-XIkD0k'; // 공개(publishable) 키: 웹에 노출돼도 되는 키. 데이터는 RLS로 본인 것만 접근
 const CLOUD_HOST = /(^|\.)github\.io$/.test(location.hostname) || ['localhost', '127.0.0.1'].includes(location.hostname);
 const sb = CLOUD_URL && CLOUD_KEY && CLOUD_HOST && window.supabase ? window.supabase.createClient(CLOUD_URL, CLOUD_KEY) : null;
-const cloud = { user: null, timer: null, last: null, status: '', msg: '', providers: {} };
-const BACK_TO = () => location.origin + location.pathname + '#my';
+const cloud = { user: null, timer: null, last: null, status: '', msg: '', providers: {}, ready: false };
+const isGuest = () => { try { return localStorage.getItem('dooing.guest') === '1'; } catch (e) { return false; } };
+const setGuest = on => { try { on ? localStorage.setItem('dooing.guest', '1') : localStorage.removeItem('dooing.guest'); } catch (e) {} };
+const BACK_TO = () => location.origin + location.pathname; // 해시(#)를 붙이면 Supabase가 붙이는 #access_token과 겹쳐서 로그인이 안 읽힘
 
 function queueCloudSave() { if (!sb || !cloud.user) return; clearTimeout(cloud.timer); cloud.timer = setTimeout(pushCloud, 800); }
 async function pushCloud() {
@@ -1469,7 +1490,25 @@ async function pullCloud(first) {
   cloud.status = '계정에 저장됨'; renderAccount();
   if (first) toast('계정에 저장된 할 일과 일정을 불러왔어요');
 }
+function loginFormHTML() {
+  const p = cloud.providers;
+  return `<div class="acc-btns">
+    ${p.kakao ? '<button class="btn wide kakao" data-acc="kakao">카카오로 계속하기</button>' : ''}
+    ${p.google ? '<button class="btn wide" data-acc="google">Google로 계속하기</button>' : ''}
+    ${p.kakao || p.google ? '<div class="acc-or">또는 이메일</div>' : ''}
+    <div class="acc-email"><input type="email" placeholder="name@example.com" autocomplete="email" aria-label="이메일"><button class="btn primary" data-acc="email">로그인 링크 받기</button></div>
+    ${cloud.msg ? `<span class="acc-status" role="status">${esc(cloud.msg)}</span>` : ''}
+  </div>`;
+}
+// 처음 화면: 로그인 안 했고 '둘러보기'도 안 골랐으면 로그인(회원가입) 화면을 먼저 띄움
+function renderGate() {
+  const g = $('#gate'); if (!g) return;
+  const show = !!sb && cloud.ready && !cloud.user && !isGuest();
+  g.hidden = !show; document.body.classList.toggle('gated', show);
+  if (show) $('#gate-body').innerHTML = loginFormHTML();
+}
 function renderAccount() {
+  renderGate();
   const box = $('#acc-body'), note = $('#foot-note');
   if (note) note.textContent = cloud.user ? `${cloud.user.email || '내 계정'}으로 로그인됨 · 할 일과 일정이 계정에 저장돼요.` : '예시 데이터로 채워져 있어요. 변경 내용은 이 브라우저에만 저장됩니다.';
   if (!box) return;
@@ -1481,13 +1520,7 @@ function renderAccount() {
   }
   if (!cloud.user) {
     box.innerHTML = `<p class="acc-lead">로그인하면 할 일과 일정이 계정에 저장돼서 폰이든 컴퓨터든 똑같이 볼 수 있어요.</p>
-      <div class="acc-btns">
-        ${cloud.providers.kakao ? '<button class="btn wide kakao" data-acc="kakao">카카오로 계속하기</button>' : ''}
-        ${cloud.providers.google ? '<button class="btn wide" data-acc="google">Google로 계속하기</button>' : ''}
-        ${cloud.providers.kakao || cloud.providers.google ? '<div class="acc-or">또는 이메일</div>' : ''}
-        <div class="acc-email"><input id="acc-email" type="email" placeholder="name@example.com" autocomplete="email" aria-label="이메일"><button class="btn" data-acc="email">로그인 링크 받기</button></div>
-        ${cloud.msg ? `<span class="acc-status">${esc(cloud.msg)}</span>` : ''}
-      </div>
+      ${loginFormHTML()}
       <span class="acc-status">처음이면 로그인하면서 바로 가입돼요. 이 기기에 있던 데이터는 계정으로 옮겨져요.</span>`;
     return;
   }
@@ -1495,6 +1528,7 @@ function renderAccount() {
     <div class="acc-acts"><button class="btn" data-acc="logout">로그아웃</button><button class="btn danger" data-acc="delete">회원 탈퇴</button></div>`;
 }
 async function accountAction(a, el) {
+  if (a === 'guest') { setGuest(true); renderGate(); return; }
   if (!sb) return;
   if (a === 'kakao' || a === 'google') {
     const { error } = await sb.auth.signInWithOAuth({ provider: a, options: { redirectTo: BACK_TO() } });
@@ -1502,18 +1536,18 @@ async function accountAction(a, el) {
     return;
   }
   if (a === 'email') {
-    const email = ($('#acc-email').value || '').trim();
+    const email = ((el.closest('.acc-btns') || document).querySelector('input[type="email"]').value || '').trim();
     if (!/^\S+@\S+\.\S+$/.test(email)) { cloud.msg = 'name@example.com 처럼 이메일 주소를 넣어 주세요.'; renderAccount(); return; }
     const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: BACK_TO() } });
-    cloud.msg = error ? '메일을 보내지 못했어요: ' + error.message : `${email}로 로그인 링크를 보냈어요. 메일함에서 링크를 눌러 주세요.`;
+    cloud.msg = error ? '메일을 보내지 못했어요: ' + error.message : `${email}로 로그인 링크를 보냈어요. 이 기기에서 가장 최근에 온 메일의 링크를 눌러 주세요.`;
     renderAccount(); return;
   }
-  if (a === 'logout') { await pushCloud(); await sb.auth.signOut(); toast('로그아웃했어요. 이 기기에는 마지막 데이터가 남아 있어요'); return; }
+  if (a === 'logout') { await pushCloud(); setGuest(false); await sb.auth.signOut(); toast('로그아웃했어요. 이 기기에는 마지막 데이터가 남아 있어요'); return; }
   if (a === 'delete') {
     if (!el.dataset.armed) { el.dataset.armed = '1'; el.classList.add('armed'); el.textContent = '한 번 더 누르면 계정과 데이터가 모두 지워져요'; return; }
     const { error } = await sb.rpc('delete_my_account');
     if (error) { toast('탈퇴하지 못했어요: ' + error.message); return; }
-    await sb.auth.signOut(); toast('탈퇴했어요. 계정과 계정에 저장된 데이터를 지웠어요');
+    setGuest(false); await sb.auth.signOut(); toast('탈퇴했어요. 계정과 계정에 저장된 데이터를 지웠어요');
   }
 }
 if (sb) {
@@ -1522,13 +1556,26 @@ if (sb) {
     .then(r => r.json()).then(st => { cloud.providers = st.external || {}; renderAccount(); }).catch(() => {});
   sb.auth.onAuthStateChange((event, session) => {
     const u = session ? session.user : null, prev = cloud.user && cloud.user.id;
-    cloud.user = u;
+    cloud.user = u; cloud.ready = true;
+    if (u) setGuest(false);
     if (u && u.id !== prev) { cloud.last = null; cloud.msg = ''; setTimeout(() => pullCloud(true), 0); }
     if (!u) cloud.status = '';
     renderAccount();
   });
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && cloud.user) pullCloud(false); });
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' || !e.target.closest('.acc-email')) return;
+    e.preventDefault(); accountAction('email', e.target.closest('.acc-email').querySelector('[data-acc="email"]'));
+  });
 }
+// 로그인 링크에서 돌아왔는데 실패한 경우(만료·이미 쓴 링크): 주소의 오류를 읽어 안내
+(() => {
+  const raw = (location.hash + '&' + location.search).replace(/\+/g, ' ');
+  const m = /error_description=([^&#]+)/.exec(raw); if (!m) return;
+  let d = m[1]; try { d = decodeURIComponent(d); } catch (e) {}
+  cloud.msg = /expired|invalid/i.test(d) ? '로그인 링크가 만료됐거나 이미 쓴 링크예요. 새 링크를 받아서 가장 최근에 온 메일의 링크를 눌러 주세요.' : '로그인하지 못했어요: ' + d;
+  history.replaceState(null, '', location.pathname);
+})();
 
 /* ---------- boot ---------- */
 const data = load();
