@@ -201,8 +201,7 @@ body.gated{overflow:hidden}
 .split{display:inline-flex;align-items:stretch;border-radius:11px;background:var(--surface);border:1px solid var(--line);overflow:hidden;box-shadow:0 1px 2px rgb(0 0 0 / .05)}
 .split button{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 16px;font-weight:600;font-size:13.5px;flex:1;white-space:nowrap}
 .split button svg{width:17px;height:17px;flex:none}
-.split button[data-new="task"]{color:var(--accent)}
-.split button[data-new="event"]{color:var(--ev)}
+.split button[data-new]{color:var(--fg)}
 .split button[data-new="task"]:hover{background:var(--accent-soft)}
 .split button[data-new="event"]:hover{background:var(--ev-soft)}
 .split .div{width:1px;background:var(--line)}
@@ -989,7 +988,7 @@ function dayPopHTML() {
   const k = pop.day, items = dayItems(k);
   return `<div class="pop-h"><h2 id="pop-h">${longDate(k)}</h2>${(l => l ? `<span class="sub">음력 ${l.leap ? '윤' : ''}${l.m}.${l.d}</span>` : '')(lunar(k))}${holiday(k) ? `<span class="sub" style="color:var(--sun)">${holiday(k)}</span>` : ''}<button class="x" data-pop="close" aria-label="닫기">×</button></div>
     ${splitHTML(k, true)}
-    ${items.length ? `<div class="pop-list">${listHTML(items, { tools: true })}</div>` : '<p class="empty">아직 비어 있어요. 위에서 할 일이나 일정을 골라 추가하세요.</p>'}`;
+    ${items.length ? `<div class="pop-list">${listHTML(items, { tools: true })}</div>` : ''}`;
 }
 function formHTML() {
   const it = pop.editId ? state.items.find(x => x.id === pop.editId) : null;
