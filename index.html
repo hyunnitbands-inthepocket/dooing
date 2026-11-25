@@ -542,7 +542,7 @@ const DOW = ['일', '월', '화', '수', '목', '금', '토'];
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const diffDays = k => Math.round((fromKey(k) - TODAY()) / 864e5);
 const PCOLORS = ['#4F5FD9', '#D9822B', '#A24FCF', '#1F9D74', '#D94F7A', '#2C8FB8'];
-const DEFAULT_MAIN = '#C2BAD9';
+const DEFAULT_MAIN = '#C4DBD9';
 // 전체 색 목록 = 기본 팔레트 + 내가 추가한 색(마지막 줄)
 // 색 목록: 사용자가 순서를 바꾸거나 지우면 prefs.palette에 저장, 아니면 기본 팔레트 + 내가 추가한 색
 const palette = () => prefs.palette || [...CAT_COLORS.flat(), ...(prefs.customColors || [])];
