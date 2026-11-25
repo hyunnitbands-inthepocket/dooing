@@ -1474,6 +1474,16 @@ async function pushCloud() {
   cloud.status = error ? '계정에 저장하지 못했어요. 인터넷 연결을 확인해 주세요.' : '계정에 저장됨';
   renderAccount();
 }
+// 로그인하면 예시 데이터는 지움 (내가 만든 항목과 카테고리는 그대로). 계정마다 한 번만.
+function clearSamples() {
+  if (prefs.samplesCleared) return false;
+  const sig = x => x.type + '|' + x.title, names = new Set(seed().items.map(sig));
+  const before = state.items.length;
+  state.items = state.items.filter(x => !names.has(sig(x)));
+  prefs.samplesCleared = true;
+  save(); savePrefs(); renderAll();
+  return before !== state.items.length;
+}
 async function pullCloud(first) {
   if (!sb || !cloud.user) return;
   const { data: row, error } = await sb.from('user_data').select('data, prefs, updated_at').eq('user_id', cloud.user.id).maybeSingle();
@@ -1482,7 +1492,7 @@ async function pullCloud(first) {
     // 첫 로그인: 이 기기에 있던 데이터를 계정으로 옮김
     const meta = cloud.user.user_metadata || {};
     if (!prefs.name && (meta.full_name || meta.name || meta.nickname)) { prefs.name = meta.full_name || meta.name || meta.nickname; renderProfile(); }
-    if (first) { await pushCloud(); toast('이 기기의 할 일과 일정을 계정에 옮겼어요'); }
+    if (first) { clearSamples(); await pushCloud(); toast('예시 데이터는 지우고, 내 할 일과 일정을 계정에 저장했어요'); }
     return;
   }
   if (cloud.last && row.updated_at <= cloud.last) return;
@@ -1496,6 +1506,7 @@ async function pullCloud(first) {
   if (!$('#v-my').hidden) { renderCats(); renderMain(); }
   cloud.status = '계정에 저장됨'; renderAccount();
   if (first) toast('계정에 저장된 할 일과 일정을 불러왔어요');
+  if (clearSamples()) await pushCloud();
 }
 function loginFormHTML() {
   const p = cloud.providers;
