@@ -475,6 +475,13 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
     <div class="cat-group"><div class="cat-label">할 일</div><div class="cat-chips" id="cats-task"></div></div>
     <div class="cat-editor" id="cat-editor" hidden></div>
   </section>
+  <section class="card" aria-labelledby="late-h">
+    <h2 class="card-h" id="late-h">지난 할 일</h2>
+    <div class="mseg" role="group" aria-label="완료하지 못한 지난 할 일 표시">
+      <button data-late="1">어제</button><button data-late="2">그저께</button><button data-late="all">모두</button><button data-late="off">표시 안 함</button>
+    </div>
+    <p class="note" style="margin:10px 0 0;text-align:left">오늘 박스에 띄울 완료하지 못한 할 일의 범위예요. 숨겨도 삭제되는 건 아니고, 캘린더에는 그대로 있어요.</p>
+  </section>
   <section class="card" aria-labelledby="mode-h">
     <h2 class="card-h" id="mode-h">화면 모드</h2>
     <div class="mseg" role="group" aria-label="화면 모드">
@@ -783,7 +790,8 @@ const listHTML = (arr, opt) => `<ul class="list">${arr.map(i => rowHTML(i, opt))
 /* ---------- today box ---------- */
 function renderToday() {
   const t = TODAY(), tk = key(t);
-  const overdue = state.items.filter(i => i.type === 'task' && !i.done && i.date && i.date < tk);
+  const lateOpt = prefs.late || 'all', lateFrom = /^\d+$/.test(lateOpt) ? key(addDays(t, -Number(lateOpt))) : '';
+  const overdue = lateOpt === 'off' ? [] : state.items.filter(i => i.type === 'task' && !i.done && i.date && i.date < tk && (!lateFrom || i.date >= lateFrom));
   const tasks = state.items.filter(i => i.date === tk && i.type === 'task');
   const events = dayItems(tk).filter(i => i.type === 'event');
   const now = new Date(), nowM = now.getHours() * 60 + now.getMinutes();
@@ -1323,6 +1331,7 @@ function renderProfile() {
   $('#photo-clear').hidden = !prefs.photo;
   $('#my-name-view').textContent = (prefs.name || '').trim() || '이름을 정해 주세요';
   $('#my-bio-view').textContent = (prefs.bio || '').trim() || '한 줄 소개가 아직 없어요';
+  document.querySelectorAll('[data-late]').forEach(b => { const on = b.dataset.late === (prefs.late || 'all'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
   document.querySelectorAll('[data-mode]').forEach(b => { const on = b.dataset.mode === (prefs.mode || 'system'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
 }
 function route() {
@@ -1396,6 +1405,8 @@ document.addEventListener('click', e => {
     state.items.forEach(i => { if (i.project === id) i.project = null; });
     save(); catEdit = null; renderCats(); renderAll(); toast('카테고리를 삭제했어요'); return;
   }
+  const lt = e.target.closest('[data-late]');
+  if (lt) { prefs.late = lt.dataset.late; savePrefs(); renderProfile(); renderAll(); return; }
   const md = e.target.closest('[data-mode]');
   if (md) { prefs.mode = md.dataset.mode; savePrefs(); applyTheme(); renderProfile(); return; }
   const nw = e.target.closest('[data-new]');
