@@ -1,4 +1,4 @@
--- 하루판 계정 데이터 (Supabase SQL Editor에 통째로 붙여넣고 Run)
+-- dooing 계정 데이터 (Supabase SQL Editor에 통째로 붙여넣고 Run)
 -- 사용자 한 명당 한 줄: 할 일·일정·카테고리(data)와 프로필·화면 설정(prefs)을 JSON으로 저장
 
 create table if not exists public.user_data (
