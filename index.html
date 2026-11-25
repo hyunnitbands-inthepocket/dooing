@@ -129,8 +129,8 @@ body.pal-dragging,body.pal-dragging *{cursor:grabbing!important}
 .btn.wide{height:42px;font-size:14px;width:100%}
 .btn.google{position:relative;overflow:hidden;gap:10px;background:#fff;border-color:#dadce0;color:#1f1f1f}
 .btn.google:hover{background:#f8f9fa;border-color:#c6c9cc}
-.btn.kakao{background:#FEE500;border-color:#FEE500;color:#191919}
-.btn.kakao:hover{background:#F5DC00}
+.btn.kakao{gap:10px;background:#fff;border-color:#dadce0;color:#1f1f1f}
+.btn.kakao:hover{background:#f8f9fa;border-color:#c6c9cc}
 .acc-or{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted)}
 .acc-or::before,.acc-or::after{content:"";flex:1;height:1px;background:var(--line)}
 .acc-form{display:flex;flex-direction:column;gap:8px}
@@ -138,6 +138,7 @@ body.pal-dragging,body.pal-dragging *{cursor:grabbing!important}
 .acc-form input:focus{outline:none;border-color:var(--accent)}
 .agree{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
 .agree a{color:inherit;text-decoration:underline}
+.agree.bad{color:var(--p1)}
 .gate-sub{margin:0 0 4px;font-size:18px;font-weight:700}
 .gate .gate-links{margin-top:2px}
 .acc-email{display:flex;gap:8px}
@@ -271,7 +272,7 @@ body.row-dragging,body.row-dragging *{cursor:grabbing!important}
 .cell.sel{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--accent) 35%,transparent)}
 .dtop{display:flex;flex-direction:column;align-items:center;min-width:0;margin-bottom:2px}
 .dnum{font-family:var(--font-num);font-weight:600;font-size:13px;width:24px;height:24px;display:grid;place-items:center;border-radius:50%;flex:none}
-.cell.sun .dnum,.cell.hd .dnum{color:var(--sun)} .cell.sat .dnum{color:var(--sat)}
+.cell.sun .dnum,.cell.hd .dnum{color:var(--sun)} .cell.sat .dnum{color:var(--sat)} .cell.sat.hd .dnum{color:var(--sun)}
 /* 오늘: 배경색 없이 칸 테두리를 메인 컬러로 살짝 두껍게 (선택 표시보다 위) */
 .cell.today{box-shadow:inset 0 0 0 2.5px var(--accent)}
 .cell.today .dnum{color:var(--accent);font-weight:800}
@@ -477,7 +478,6 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
   </section>
   <section class="card" aria-labelledby="color-h">
     <div class="card-hrow"><h2 class="card-h" id="color-h">메인 컬러</h2><button class="linkbtn" id="pal-reset" hidden>기본 색으로 되돌리기</button><button class="btn sm" id="pal-edit">편집</button></div>
-    <p class="note" id="pal-note"></p>
     <div class="ce-colors" id="main-colors" role="radiogroup" aria-label="메인 컬러"></div>
     <div class="color-add">
       <input type="color" id="cc-wheel" value="#7FB3D5" aria-label="색상 휠에서 고르기">
@@ -485,7 +485,7 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
       <button class="btn" id="cc-add">색 추가</button>
     </div>
     <span class="err" id="cc-err" hidden></span>
-    <label class="switch-row"><input type="checkbox" id="raw-main" role="switch"><span class="sw-track" aria-hidden="true"></span><span><b>고른 색 그대로 쓰기</b><small>끄면 연한 색은 글자로 쓸 때 진하게 맞춰서 읽히게 해요</small></span></label>
+    <label class="switch-row"><input type="checkbox" id="raw-main" role="switch"><span class="sw-track" aria-hidden="true"></span><span><b>고른 색 그대로 쓰기</b></span></label>
   </section>
   <section class="card" aria-labelledby="cat-h">
     <h2 class="card-h" id="cat-h">카테고리</h2>
@@ -498,7 +498,6 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
     <div class="mseg" role="group" aria-label="완료하지 못한 지난 할 일 표시">
       <button data-late="1">어제</button><button data-late="2">그저께</button><button data-late="all">모두</button><button data-late="off">표시 안 함</button>
     </div>
-    <p class="note" style="margin:10px 0 0;text-align:left">오늘 박스에 띄울 완료하지 못한 할 일의 범위예요. 숨겨도 삭제되는 건 아니고, 캘린더에는 그대로 있어요.</p>
   </section>
   <section class="card" aria-labelledby="mode-h">
     <h2 class="card-h" id="mode-h">화면 모드</h2>
@@ -506,7 +505,6 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
       <button data-mode="system">시스템</button><button data-mode="light">라이트</button><button data-mode="dark">다크</button>
     </div>
   </section>
-  <p class="note">프로필과 화면 모드는 이 브라우저에만 저장돼요.</p>
   <div class="my-foot" id="acc-body"></div>
 </div>
 </main>
@@ -539,7 +537,7 @@ const DOW = ['일', '월', '화', '수', '목', '금', '토'];
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const diffDays = k => Math.round((fromKey(k) - TODAY()) / 864e5);
 const PCOLORS = ['#4F5FD9', '#D9822B', '#A24FCF', '#1F9D74', '#D94F7A', '#2C8FB8'];
-const DEFAULT_MAIN = '#0E7A6A';
+const DEFAULT_MAIN = '#C2BAD9';
 // 전체 색 목록 = 기본 팔레트 + 내가 추가한 색(마지막 줄)
 // 색 목록: 사용자가 순서를 바꾸거나 지우면 prefs.palette에 저장, 아니면 기본 팔레트 + 내가 추가한 색
 const palette = () => prefs.palette || [...CAT_COLORS.flat(), ...(prefs.customColors || [])];
@@ -1267,9 +1265,8 @@ const initial = () => (prefs.name || '').trim().slice(0, 1) || '나';
 
 /* 메인 컬러: 연한 색은 글자로 쓸 때 진하게 섞어서 읽히게 */
 function applyMain() {
-  const c = prefs.main, props = ['--accent', '--accent-soft', '--on-accent'];
-  if (!c) { props.forEach(v => ROOT.style.removeProperty(v)); return; }
-  const light = !prefs.rawMain && onColor(c) !== '#FFFFFF';
+  const c = prefs.main || DEFAULT_MAIN, props = ['--accent', '--accent-soft', '--on-accent'];
+  const light = !(prefs.main ? prefs.rawMain : true) && onColor(c) !== '#FFFFFF';
   ROOT.style.setProperty('--accent', light ? `color-mix(in srgb, ${c} 55%, var(--fg))` : c);
   ROOT.style.setProperty('--accent-soft', `color-mix(in srgb, ${c} 30%, var(--surface))`);
   ROOT.style.setProperty('--on-accent', light ? 'var(--surface)' : onColor(c));
@@ -1283,10 +1280,7 @@ function renderMain() {
     : `<button class="ce-c ${c.toLowerCase() === cur ? 'on' : ''}" role="radio" aria-checked="${c.toLowerCase() === cur}" aria-label="색 ${c}" data-main="${c}" style="--sw:${c}"></button>`).join('')}</div>`;
   $('#pal-edit').textContent = palEdit ? '완료' : '편집';
   $('#pal-reset').hidden = !palEdit || !prefs.palette;
-  $('#pal-note').textContent = palEdit
-    ? '동그라미를 끌어서 순서를 바꾸고, ×를 눌러 지워요.'
-    : '오늘 날짜 표시와 버튼에 쓰이는 색이에요. 여기서 추가한 색은 카테고리 색으로도 쓸 수 있어요.';
-  $('#raw-main').checked = !!prefs.rawMain;
+  $('#raw-main').checked = (prefs.main ? !!prefs.rawMain : true);
 }
 /* 편집 모드: 동그라미 끌어서 순서 바꾸기 (마우스·터치 공통) */
 let palDrag = null;
@@ -1574,8 +1568,6 @@ const socialBtnsHTML = () => `<button class="btn wide kakao" data-acc="kakao">${
 const msgHTML = () => cloud.msg ? `<span class="acc-status" role="status">${esc(cloud.msg)}</span>` : '';
 function loginFormHTML() {
   return `<div class="acc-btns">
-    ${socialBtnsHTML()}
-    <div class="acc-or">또는 이메일</div>
     <form class="acc-form" data-form="signin" novalidate>
       <input name="email" type="email" placeholder="이메일" autocomplete="email" aria-label="이메일">
       <input name="pw" type="password" placeholder="비밀번호" autocomplete="current-password" aria-label="비밀번호">
@@ -1583,6 +1575,8 @@ function loginFormHTML() {
     </form>
     ${msgHTML()}
     <div class="gate-links"><button class="linkbtn" data-acc="to-signup">이메일로 회원가입</button><button class="linkbtn" data-acc="forgot">비밀번호 찾기</button></div>
+    <div class="acc-or">또는 간편 로그인</div>
+    ${socialBtnsHTML()}
   </div>`;
 }
 function signupFormHTML() {
@@ -1596,7 +1590,6 @@ function signupFormHTML() {
       <button class="btn primary wide" type="submit">가입하고 인증 메일 받기</button>
     </form>
     ${msgHTML()}
-    <span class="acc-status">Google·카카오는 로그인 화면에서 누르면 바로 가입돼요.</span>
     <div class="gate-links"><button class="linkbtn" data-acc="to-login">이미 계정이 있어요</button></div>
   </div>`;
 }
@@ -1628,10 +1621,10 @@ function renderAccount() {
   if (!box) return;
   if (!sb) { box.innerHTML = ''; return; }
   if (!cloud.user) {
-    box.innerHTML = `<span class="acc-status">로그인하면 할 일과 일정이 계정에 저장돼서 폰이든 컴퓨터든 똑같이 볼 수 있어요.</span><div class="acc-acts"><button class="btn primary" data-acc="login">로그인 / 회원가입</button></div>`;
+    box.innerHTML = `<div class="acc-acts"><button class="btn primary" data-acc="login">로그인 / 회원가입</button></div>`;
     return;
   }
-  box.innerHTML = `${cloud.status ? `<span class="acc-status">${esc(cloud.status)}</span>` : ''}<div class="acc-acts"><button class="btn" data-acc="logout">로그아웃</button><button class="btn danger" data-acc="delete">회원 탈퇴</button></div>`;
+  box.innerHTML = `<div class="acc-acts"><button class="btn" data-acc="logout">로그아웃</button><button class="btn danger" data-acc="delete">회원 탈퇴</button></div>`;
 }
 const authMsg = e => {
   const m = e.message || '';
@@ -1657,7 +1650,7 @@ async function authForm(form) {
     if (DISPOSABLE.test(email)) return fail('일회용 이메일로는 가입할 수 없어요. 평소 쓰는 이메일을 써 주세요.');
     if (pw.length < 8) return fail('비밀번호는 8자 이상으로 해 주세요.');
     if (pw !== f.get('pw2')) return fail('비밀번호 확인이 달라요.');
-    if (!f.get('agree')) return fail('개인정보처리방침에 동의해 주세요.');
+    if (!f.get('agree')) { cloud.msg = ''; renderGate(); const ag = document.querySelector('#gate-body .agree'); if (ag) { ag.classList.add('bad'); ag.querySelector('input').focus(); } return; }
     const { data, error } = await sb.auth.signUp({ email, password: pw, options: { emailRedirectTo: BACK_TO() } });
     if (error) return fail(authMsg(error));
     if (data.user && data.user.identities && !data.user.identities.length) return fail('이미 가입된 이메일이에요. 로그인해 주세요.');
