@@ -4,9 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="오늘 할 일과 일정, 한 달 캘린더를 한 화면에서 보는 플래너">
+<meta name="theme-color" content="#C4DBD9">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="dooing">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="format-detection" content="telephone=no">
 <style>
 :root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-body{margin:0;font:14px/1.5 system-ui,sans-serif}
+body{margin:0;font:14px/1.5 system-ui,sans-serif;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 img{max-width:100%}
 [hidden]{display:none!important}
 </style>
@@ -429,6 +438,8 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
   .t-add{grid-column:2;grid-row:1/4;padding-top:0;align-self:end}
 }
 @media (max-width:640px){
+  /* iOS는 글자가 16px 미만인 입력칸을 누르면 화면을 확대해 버려서 모바일에서만 키움 */
+  .acc-form input:not([type=checkbox]),.acc-email input,.field input,.field select,.field textarea{font-size:16px}
   .page{padding-block:16px 40px}
   .my .grid2{grid-template-columns:minmax(0,1fr)}
   .card{padding:20px}
@@ -1780,6 +1791,10 @@ renderAll();
 route();
 renderAccount();
 setInterval(() => { if (!pop.open) renderToday(); }, 60000);
+// 설치형(PWA)용 서비스워커: https 또는 localhost에서만 등록
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
 })();
 </script>
 </body>
