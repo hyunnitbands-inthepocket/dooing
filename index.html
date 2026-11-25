@@ -917,9 +917,9 @@ function renderToday() {
 
   // 오늘 아무것도 없으면 빈 채로 두지 않고 앞으로 예정된 일정·할 일을 보여줌
   let upBlock = '';
-  if (!evRows && !taskBlocks && span > 0) {
+  if (!evRows && !taskBlocks) {
     const ups = [];
-    for (let n = 1; n <= span && ups.length < 5; n++) {
+    for (let n = 1; n <= (span || 14) && ups.length < 5; n++) { // '표시 안 함'이어도 예정은 2주까지 보임
       const k = key(addDays(t, n));
       dayItems(k).filter(x => !x.done).forEach(x => ups.push({ ...x, date: k }));
     }
