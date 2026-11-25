@@ -324,7 +324,6 @@ body.row-dragging,body.row-dragging *{cursor:grabbing!important}
 .hol{font-size:10px;line-height:1.2;max-width:100%;color:var(--sun);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lunar{display:flex;align-items:center;gap:2px;margin-top:1px;font-size:9.5px;line-height:1.2;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 .lunar .lt{opacity:.7}
-.cell.fullmoon .dnum{box-shadow:inset 0 0 0 1px var(--moon)}
 .t-day.hd{color:var(--sun)}
 .cchips{display:flex;flex-direction:column;gap:2px;min-width:0}
 .cchip{display:block;font-size:11.5px;line-height:1.4;padding:1px 5px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -708,8 +707,8 @@ const holiday = k => { const a = holidaysOf(+k.slice(0, 4)).get(k); return a ? [
 const MOON = '<svg class="moon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5" fill="currentColor"/></svg>';
 const lunarHTML = k => {
   const l = lunar(k);
-  if (!l || l.d !== 1) return '';
-  return `<span class="lunar" title="음력 ${l.leap ? '윤' : ''}${l.m}월 1일"><span class="lt">${l.leap ? '윤' : ''}${l.m}.1</span></span>`;
+  if (!l || (l.d !== 1 && l.d !== 15)) return '';
+  return `<span class="lunar" title="음력 ${l.leap ? '윤' : ''}${l.m}월 ${l.d}일"><span class="lt">${l.leap ? '윤' : ''}${l.m}.${l.d}</span></span>`;
 };
 
 /* ---------- state ---------- */
@@ -944,7 +943,7 @@ function renderCal() {
   let html = '';
   for (let i = 0; i < n; i++) {
     const d = addDays(start, i), k = key(d), items = dayItems(k).filter(x => x.type === (state.calView === 'task' ? 'task' : 'event'));
-    const cls = ['cell', d.getMonth() !== m && 'out', d.getDay() === 0 && 'sun', d.getDay() === 6 && 'sat', holiday(k) && 'hd', k === tk && 'today', pop.open && pop.day === k && 'sel', lunar(k)?.d === 15 && 'fullmoon'].filter(Boolean).join(' ');
+    const cls = ['cell', d.getMonth() !== m && 'out', d.getDay() === 0 && 'sun', d.getDay() === 6 && 'sat', holiday(k) && 'hd', k === tk && 'today', pop.open && pop.day === k && 'sel'].filter(Boolean).join(' ');
     const taskView = state.calView === 'task';
     // all day 하이라이트 색: 이미 연한 색은 그대로, 진한 색은 파스텔로 (비율은 테마별 --hlp / --hls)
     const hl = c => `color-mix(in srgb, ${c} ${/^#/.test(c) && onColor(c) !== '#FFFFFF' ? 'var(--hlp)' : 'var(--hls)'}, transparent)`;
