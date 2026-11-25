@@ -556,7 +556,7 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
   <section class="plain" aria-labelledby="late-h">
     <h2 class="card-h" id="late-h">지난 할 일</h2>
     <div class="mseg" role="group" aria-label="완료하지 못한 지난 할 일 표시">
-      <button data-late="1">어제</button><button data-late="2">그저께</button><button data-late="all">모두</button><button data-late="off">표시 안 함</button>
+      <button data-late="1">어제</button><button data-late="2">그저께</button><button data-late="all">2주</button><button data-late="off">표시 안 함</button>
     </div>
   </section>
   <section class="plain" aria-labelledby="mode-h">
@@ -884,8 +884,8 @@ const listHTML = (arr, opt) => `<ul class="list">${arr.map(i => rowHTML(i, opt))
 /* ---------- today box ---------- */
 function renderToday() {
   const t = TODAY(), tk = key(t);
-  const lateOpt = prefs.late || 'all', lateFrom = /^\d+$/.test(lateOpt) ? key(addDays(t, -Number(lateOpt))) : '';
-  const overdue = lateOpt === 'off' ? [] : state.items.filter(i => i.type === 'task' && !i.done && i.date && i.date < tk && (!lateFrom || i.date >= lateFrom));
+  const lateOpt = prefs.late || 'all', lateFrom = key(addDays(t, -(/^\d+$/.test(lateOpt) ? Number(lateOpt) : 14))); // '모두'도 최대 2주 전까지
+  const overdue = lateOpt === 'off' ? [] : state.items.filter(i => i.type === 'task' && !i.done && i.date && i.date < tk && i.date >= lateFrom);
   const tasks = state.items.filter(i => i.date === tk && i.type === 'task');
   const events = dayItems(tk).filter(i => i.type === 'event');
   const now = new Date(), nowM = now.getHours() * 60 + now.getMinutes();
@@ -918,7 +918,7 @@ function renderToday() {
   let upBlock = '';
   if (!evRows && !taskBlocks) {
     const ups = [];
-    for (let n = 1; n <= 90 && ups.length < 5; n++) {
+    for (let n = 1; n <= 14 && ups.length < 5; n++) { // 오늘로부터 앞으로 2주까지
       const k = key(addDays(t, n));
       dayItems(k).filter(x => !x.done).forEach(x => ups.push({ ...x, date: k }));
     }
@@ -931,7 +931,7 @@ function renderToday() {
         ? `<li class="t-item t-ev up" data-id="${x.id}"><div class="t-row"><span class="bar" style="--c:${p ? p.color : 'var(--ev)'}"></span>${when}<button class="t-title" data-act="edit">${esc(x.title)}</button></div>${del}</li>`
         : `<li class="t-item tk up" data-id="${x.id}" style="--c:${c};--oc:${onColor(c)}"><div class="t-row"><button class="box" data-act="toggle" aria-label="완료로 표시">${IC.check}</button>${when}<button class="t-title" data-act="edit">${esc(x.title)}</button></div>${del}</li>`;
     }).join('');
-    if (rows) upBlock = `<div class="t-block t-up-block"><span class="t-label up">예정</span><ul class="t-list">${rows}</ul></div>`;
+    if (rows) upBlock = `<div class="t-block t-up-block"><span class="t-label up">예정된 일정</span><ul class="t-list">${rows}</ul></div>`;
   }
 
   $('#today').innerHTML = `
