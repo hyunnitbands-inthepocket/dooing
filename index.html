@@ -19,7 +19,7 @@ img{max-width:100%}
 /* Layout: 한 열. 위에 '오늘' 박스, 아래 월간 캘린더. 날짜를 누르면 할 일/일정 2분할 버튼이 든 팝오버(모바일은 바텀시트). */
 :root{
   --bg:#F3F5F7; --surface:#FFFFFF; --surface-2:#EAEEF1; --line:#DCE2E7;
-  --fg:#17202A; --muted:#66727E; --accent:#0E7A6A; --accent-soft:#D8EEE9; --on-accent:#FFFFFF;
+  --fg:#17202A; --muted:#66727E; --accent:#C4DBD9; --accent-soft:#E4EFEE; --on-accent:#17202A;
   --ev:#3D5BD9; --ev-soft:#E2E7FB;
   --p1:#D64535; --p2:#C98010; --p3:#3D6FD6; --p0:#A3ADB7;
   --sun:#D64535; --sat:#3D6FD6; --moon:#A3B6D3; --today-bg:#FFFBE3; --hlp:55%; --hls:20%;
@@ -66,6 +66,12 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .rail-item.on{color:var(--accent)}
 .rail-item[data-nav="home"].on{background:var(--accent-soft)}
 .rail-item[data-nav="my"].on .avatar{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--accent)}
+.rail-login{display:none;height:36px;padding:0 14px;border-radius:999px;font-weight:700;font-size:13px;color:var(--fg);background:var(--surface-2)}
+.rail-login:hover{filter:brightness(.96)}
+body.readonly .rail-login{display:inline-flex;align-items:center}
+body.readonly [data-nav="my"]{display:none}
+body.readonly .t-add,body.readonly .pop [data-new],body.readonly .plus,body.readonly .t-del,body.readonly #reset{display:none}
+body.readonly .t-label,body.readonly .box,body.readonly .t-title,body.readonly .pop [data-act],body.readonly .cchip{pointer-events:none}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .avatar{display:grid;place-items:center;border-radius:50%;background:var(--accent);color:var(--on-accent);font-weight:700;flex:none;line-height:1}
 .avatar.sm{width:26px;height:26px;font-size:12px}
@@ -440,6 +446,7 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 <nav class="rail" aria-label="메뉴">
   <a href="#home" class="rail-item" data-nav="home" title="홈"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z"/></svg><span class="sr">홈</span></a>
   <a href="#my" class="rail-item" data-nav="my" title="마이페이지"><span class="avatar sm" id="rail-avatar" aria-hidden="true"></span><span class="sr">마이페이지</span></a>
+  <button class="rail-login" id="rail-login" data-acc="login">로그인</button>
 </nav>
 <div class="view" id="v-home">
   <section class="today" id="today" aria-label="오늘"></section>
@@ -1272,7 +1279,7 @@ const initial = () => (prefs.name || '').trim().slice(0, 1) || '나';
 
 /* 메인 컬러: 연한 색은 글자로 쓸 때 진하게 섞어서 읽히게 */
 function applyMain() {
-  const gated = document.body.classList.contains('gated'); // 로그인 전 첫 화면은 저장된 색과 상관없이 기본색
+  let gated = false; try { gated = viewOnly(); } catch (e) {} // 로그인 전(첫 화면·둘러보기)은 저장된 색과 상관없이 기본색
   const c = gated ? DEFAULT_MAIN : (prefs.main || DEFAULT_MAIN), props = ['--accent', '--accent-soft', '--on-accent'];
   // 메인 컬러의 보색(색상환 반대편): '예정' 표시에 씀
   { const n = parseInt(c.slice(1), 16), r = (n >> 16) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
@@ -1387,6 +1394,7 @@ function renderProfile() {
   document.querySelectorAll('[data-mode]').forEach(b => { const on = b.dataset.mode === (prefs.mode || 'system'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
 }
 function route() {
+  if (location.hash === '#my' && typeof viewOnly === 'function' && viewOnly()) { history.replaceState(null, '', location.pathname + '#home'); }
   const v = location.hash === '#my' ? 'my' : 'home';
   $('#v-home').hidden = v !== 'home';
   $('#v-my').hidden = v !== 'my';
@@ -1619,12 +1627,27 @@ function recoverFormHTML() {
   </div>`;
 }
 // 처음 화면: 로그인 안 했고 '둘러보기'도 안 골랐으면 로그인(회원가입) 화면을 먼저 띄움
+const viewOnly = () => !!sb && !cloud.user;
+let wasViewOnly = null;
+function syncViewOnly() {
+  const vo = viewOnly();
+  document.body.classList.toggle('readonly', vo);
+  if (vo !== wasViewOnly) { wasViewOnly = vo; applyMain(); if (vo && location.hash === '#my') { location.hash = '#home'; } }
+}
+// 보기 전용: 추가·수정·완료·삭제·끌어서 옮기기를 모두 막음 (화면에서도 숨기지만 한 번 더 막아 둠)
+document.addEventListener('click', e => {
+  if (!viewOnly()) return;
+  if (e.target.closest('[data-new],[data-act]:not([data-act="login"]),[data-clip],[data-tid],[data-rep],[data-pop="save"],[data-pop="del"],#reset')) { e.preventDefault(); e.stopPropagation(); }
+}, true);
+document.addEventListener('pointerdown', e => {
+  if (!viewOnly()) return;
+  if (e.target.closest('#today .t-item, #grid [data-tid]')) e.stopPropagation();
+}, true);
 function renderGate() {
   const g = $('#gate'); if (!g) return;
   const show = !!sb && cloud.ready && (cloud.mode === 'recover' || (!cloud.user && !isGuest()));
-  const was = document.body.classList.contains('gated');
   g.hidden = !show; document.body.classList.toggle('gated', show);
-  if (was !== show) applyMain();
+  syncViewOnly();
   if (!show) return;
   const m = cloud.mode;
   $('#gate-body').innerHTML = m === 'signup' ? signupFormHTML() : m === 'recover' ? recoverFormHTML() : loginFormHTML();
@@ -1632,7 +1655,7 @@ function renderGate() {
 function renderAccount() {
   renderGate(); renderProfile();
   const box = $('#acc-body'), note = $('#foot-note');
-  if (note) note.textContent = cloud.user ? `${cloud.user.email || '내 계정'}으로 로그인됨 · 할 일과 일정이 계정에 저장돼요.` : '예시 데이터로 채워져 있어요. 변경 내용은 이 브라우저에만 저장됩니다.';
+  if (note) note.textContent = cloud.user ? `${cloud.user.email || '내 계정'}으로 로그인됨 · 할 일과 일정이 계정에 저장돼요.` : (sb ? '' : '예시 데이터로 채워져 있어요. 변경 내용은 이 브라우저에만 저장됩니다.');
   if (!box) return;
   if (!sb) { box.innerHTML = ''; return; }
   if (!cloud.user) {
@@ -1717,7 +1740,7 @@ if (sb) {
     .then(r => r.json()).then(st => { cloud.providers = st.external || {}; renderAccount(); }).catch(() => {});
   sb.auth.onAuthStateChange((event, session) => {
     const u = session ? session.user : null, prev = cloud.user && cloud.user.id;
-    cloud.user = u; cloud.ready = true;
+    cloud.user = u; cloud.ready = true; syncViewOnly();
     if (event === 'PASSWORD_RECOVERY') { cloud.mode = 'recover'; cloud.msg = ''; }
     if (u) setGuest(false);
     if (u && u.id !== prev) { cloud.last = null; cloud.msg = ''; setTimeout(() => pullCloud(true), 0); }
