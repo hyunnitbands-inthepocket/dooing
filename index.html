@@ -339,9 +339,10 @@ body.row-dragging,body.row-dragging *{cursor:grabbing!important}
 .cchip.tk.done{color:var(--muted);text-decoration:line-through}
 .cchip.tk.done::before{background:var(--accent);border-color:var(--accent)}
 .t-ev .tm b{font:inherit;color:inherit}
-.tseg{position:relative;display:inline-grid;grid-template-columns:1fr 1fr;height:34px;padding:3px;gap:0;border-radius:999px;background:var(--surface-2);isolation:isolate}
-.tseg::before{content:"";position:absolute;z-index:-1;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);border-radius:999px;background:var(--accent);box-shadow:0 1px 3px rgb(16 24 32 / .18);transition:transform .2s ease}
-.tseg:has(button:last-child.on)::before{transform:translateX(100%)}
+.tseg{position:relative;display:inline-grid;grid-template-columns:repeat(3,1fr);height:34px;padding:3px;gap:0;border-radius:999px;background:var(--surface-2);isolation:isolate}
+.tseg::before{content:"";position:absolute;z-index:-1;top:3px;bottom:3px;left:3px;width:calc(33.333% - 2px);border-radius:999px;background:var(--accent);box-shadow:0 1px 3px rgb(16 24 32 / .18);transition:transform .2s ease}
+.tseg:has(button:nth-child(2).on)::before{transform:translateX(100%)}
+.tseg:has(button:nth-child(3).on)::before{transform:translateX(200%)}
 .tseg button{padding:0 14px;font-size:12px;font-weight:600;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;border-radius:999px;transition:color .2s}
 .tseg button.on{color:var(--on-accent);font-weight:700}
 .cmore{font-size:11px;color:var(--muted);padding-left:5px}
@@ -513,7 +514,7 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
   <section aria-labelledby="cal-title">
     <div class="cal-h">
       <div class="cal-left">
-        <div class="tseg" role="group" aria-label="캘린더에 보일 항목"><button data-cv="event">일정</button><button data-cv="task">할 일</button></div>
+        <div class="tseg" role="group" aria-label="캘린더에 보일 항목"><button data-cv="event">일정</button><button data-cv="task">할 일</button><button data-cv="all">All</button></div>
       </div>
       <div class="cal-mid">
         <button class="arrow" data-cal="-1" aria-label="이전 달"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14.5 6l-6 6 6 6"/></svg></button>
@@ -739,7 +740,7 @@ try {
 } catch (e) {}
 const STORE = 'dooing.v1';
 const state = { items: [], projects: [], calMonth: null, calView: 'event' };
-try { if (localStorage.getItem('dooing.cv') === 'task') state.calView = 'task'; } catch (e) {}
+try { const cv = localStorage.getItem('dooing.cv'); if (cv === 'task' || cv === 'all') state.calView = cv; } catch (e) {}
 let clip = null; // 복사해 둔 할 일 { id }
 const taskChip = x => {
   const p = proj(x.project);
@@ -960,18 +961,21 @@ function renderCal() {
   const tk = key(TODAY());
   let html = '';
   for (let i = 0; i < n; i++) {
-    const d = addDays(start, i), k = key(d), items = dayItems(k).filter(x => x.type === (state.calView === 'task' ? 'task' : 'event'));
+    const d = addDays(start, i), k = key(d), items = dayItems(k).filter(x => state.calView === 'all' || x.type === (state.calView === 'task' ? 'task' : 'event'));
     const cls = ['cell', d.getMonth() !== m && 'out', d.getDay() === 0 && 'sun', d.getDay() === 6 && 'sat', holiday(k) && 'hd', k === tk && 'today', pop.open && pop.day === k && 'sel'].filter(Boolean).join(' ');
     const taskView = state.calView === 'task';
     // all day 하이라이트 색: 이미 연한 색은 그대로, 진한 색은 파스텔로 (비율은 테마별 --hlp / --hls)
     const hl = c => `color-mix(in srgb, ${c} ${/^#/.test(c) && onColor(c) !== '#FFFFFF' ? 'var(--hlp)' : 'var(--hls)'}, transparent)`;
     const adChip = x => { const c = (proj(x.project) || {}).color || 'var(--accent)'; return `<span class="cchip ev ad" style="--hl:${hl(c)}">${evIcon(x)}<span class="ct">${esc(x.title)}</span></span>`; };
-    const chips = taskView ? items.slice(0, 4).map(taskChip).join('')
-      : items.slice(0, 3).map(x => x.time ? `<span class="cchip ev">${timeHTML(x.time)}${evIcon(x)}<span class="ct">${esc(x.title)}</span></span>` : adChip(x)).join('');
-    const lim = taskView ? 4 : 3;
+    const evChip = x => x.time ? `<span class="cchip ev">${timeHTML(x.time)}${evIcon(x)}<span class="ct">${esc(x.title)}</span></span>` : adChip(x);
+    const allView = state.calView === 'all';
+    const chips = allView ? items.slice(0, 4).map(x => x.type === 'task' ? taskChip(x) : evChip(x)).join('')
+      : taskView ? items.slice(0, 4).map(taskChip).join('')
+      : items.slice(0, 3).map(evChip).join('');
+    const lim = allView || taskView ? 4 : 3;
     const more = items.length > lim ? `<span class="cmore">+${items.length - lim}개 더</span>` : '';
-    const dots = items.slice(0, 4).map(() => taskView ? '<i></i>' : '<i class="ev"></i>').join('');
-    html += `<button class="${cls}" data-day="${k}" aria-label="${longDate(k)}${holiday(k) ? ' ' + holiday(k) : ''}, ${taskView ? '할 일' : '일정'} ${items.length}개">
+    const dots = items.slice(0, 4).map(x => (allView ? x.type === 'task' : taskView) ? '<i></i>' : '<i class="ev"></i>').join('');
+    html += `<button class="${cls}" data-day="${k}" aria-label="${longDate(k)}${holiday(k) ? ' ' + holiday(k) : ''}, ${allView ? '일정·할 일' : taskView ? '할 일' : '일정'} ${items.length}개">
       <span class="dtop"><span class="dnum">${d.getDate()}</span>${holiday(k) ? `<span class="hol">${holiday(k)}</span>` : ''}${lunarHTML(k)}</span>
       <span class="cchips">${chips}${more}</span><span class="dots">${dots}</span></button>`;
   }
@@ -1133,7 +1137,7 @@ function saveForm() {
 function renderAll() {
   renderToday(); renderCal(); renderPop();
   document.querySelectorAll('[data-cv]').forEach(b => { const on = b.dataset.cv === state.calView; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
-  $('#cal-hint').hidden = state.calView !== 'task';
+  $('#cal-hint').hidden = state.calView === 'event';
   renderClipBar();
 }
 function renderClipBar() {
