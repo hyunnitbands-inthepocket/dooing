@@ -199,6 +199,9 @@ body.row-dragging,body.row-dragging *{cursor:grabbing!important}
 .t-ev .tm{width:40px;flex:none;font-family:var(--font-num);font-size:12.5px;color:var(--muted)}
 .t-ev .bar{width:3px;height:15px;border-radius:2px;background:color-mix(in srgb,var(--c) 85%,var(--fg));flex:none}
 .t-ev.now .tm{color:var(--ev);font-weight:700}
+.t-label.up{background:none;color:var(--muted);padding-left:0;font-weight:600}
+.t-item .t-meta.up{margin-left:0}
+.t-item.up .t-title{color:var(--muted)}
 .t-empty{font-size:12.5px;color:var(--muted);padding:5px 0;margin:0}
 
 /* ---------- rows ---------- */
@@ -820,6 +823,25 @@ function renderToday() {
       ${rows ? `<ul class="t-list">${rows}</ul>` : ''}</div>`;
   }).join('');
 
+  // 오늘 아무것도 없으면 빈 채로 두지 않고 앞으로 예정된 일정·할 일을 보여줌
+  let upBlock = '';
+  if (!evRows && !taskBlocks) {
+    const ups = [];
+    for (let n = 1; n <= 90 && ups.length < 5; n++) {
+      const k = key(addDays(t, n));
+      dayItems(k).filter(x => !x.done).forEach(x => ups.push({ ...x, date: k }));
+    }
+    const del = '<button class="t-del" data-act="del" aria-label="삭제" title="삭제"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9.5 7V4.8c0-.4.3-.8.8-.8h3.4c.5 0 .8.4.8.8V7M6.5 7l.8 12.1c.1.8.7 1.4 1.5 1.4h6.4c.8 0 1.4-.6 1.5-1.4L17.5 7M10 11v6M14 11v6"/></svg></button>';
+    const rows = ups.slice(0, 5).map(x => {
+      const p = proj(x.project), c = p ? p.color : 'var(--accent)';
+      const when = `<span class="t-meta up">${dateLabel(x.date)}${x.time ? ' ' + x.time : ''}</span>`;
+      return x.type === 'event'
+        ? `<li class="t-item t-ev up" data-id="${x.id}"><div class="t-row"><span class="bar" style="--c:${p ? p.color : 'var(--ev)'}"></span><button class="t-title" data-act="edit">${esc(x.title)}</button>${when}</div>${del}</li>`
+        : `<li class="t-item tk up" data-id="${x.id}" style="--c:${c};--oc:${onColor(c)}"><div class="t-row"><button class="box" data-act="toggle" aria-label="완료로 표시">${IC.check}</button><button class="t-title" data-act="edit">${esc(x.title)}</button>${when}</div>${del}</li>`;
+    }).join('');
+    if (rows) upBlock = `<div class="t-block t-up-block"><span class="t-label up">예정</span><ul class="t-list">${rows}</ul></div>`;
+  }
+
   $('#today').innerHTML = `
     <div class="t-date">
       <div class="t-ym"><span>${t.getFullYear()}</span><b>${pad(t.getMonth() + 1)}</b></div>
@@ -827,7 +849,7 @@ function renderToday() {
       <div class="t-dow">${DOW[t.getDay()]}요일</div>
       <div class="t-add"><div class="msplit"><button data-new="task" data-d="${tk}">+ 할 일</button><span class="div"></span><button data-new="event" data-d="${tk}">+ 일정</button></div></div>
     </div>
-    <div class="t-blocks">${evBlock}${taskBlocks}</div>`;
+    <div class="t-blocks">${evBlock}${taskBlocks}${upBlock}</div>`;
 }
 
 /* ---------- calendar ---------- */
