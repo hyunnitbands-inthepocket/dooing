@@ -514,7 +514,7 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
   <section aria-labelledby="cal-title">
     <div class="cal-h">
       <div class="cal-left">
-        <div class="tseg" role="group" aria-label="캘린더에 보일 항목"><button data-cv="event">일정</button><button data-cv="task">할 일</button><button data-cv="all">All</button></div>
+        <div class="tseg" role="group" aria-label="캘린더에 보일 항목"><button data-cv="all">All</button><button data-cv="event">일정</button><button data-cv="task">할 일</button></div>
       </div>
       <div class="cal-mid">
         <button class="arrow" data-cal="-1" aria-label="이전 달"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14.5 6l-6 6 6 6"/></svg></button>
@@ -739,8 +739,8 @@ try {
   localStorage.removeItem('harupan.ts');
 } catch (e) {}
 const STORE = 'dooing.v1';
-const state = { items: [], projects: [], calMonth: null, calView: 'event' };
-try { const cv = localStorage.getItem('dooing.cv'); if (cv === 'task' || cv === 'all') state.calView = cv; } catch (e) {}
+const state = { items: [], projects: [], calMonth: null, calView: 'all' };
+try { localStorage.removeItem('dooing.cv'); const cv = localStorage.getItem('dooing.cv2'); if (cv === 'event' || cv === 'task' || cv === 'all') state.calView = cv; } catch (e) {} // 기본은 All (예전 저장값은 비움)
 let clip = null; // 복사해 둔 할 일 { id }
 const taskChip = x => {
   const p = proj(x.project);
@@ -1548,7 +1548,7 @@ document.addEventListener('click', e => {
   const rp = e.target.closest('[data-rep]');
   if (rp) { rp.parentElement.querySelectorAll('[data-rep]').forEach(b => { const on = b === rp; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); }); return; }
   const cvb = e.target.closest('[data-cv]');
-  if (cvb) { state.calView = cvb.dataset.cv; try { localStorage.setItem('dooing.cv', state.calView); } catch (err) {} clip = null; renderAll(); return; }
+  if (cvb) { state.calView = cvb.dataset.cv; try { localStorage.setItem('dooing.cv2', state.calView); } catch (err) {} clip = null; renderAll(); return; }
   const tc = e.target.closest('[data-tid]');
   if (tc) {
     if (clip && clip.id !== tc.dataset.tid) pasteTo(tc.closest('[data-day]').dataset.day);
