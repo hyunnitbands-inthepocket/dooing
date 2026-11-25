@@ -226,8 +226,9 @@ body.row-dragging,body.row-dragging *{cursor:grabbing!important}
 .t-ev .tm{width:40px;flex:none;font-family:var(--font-num);font-size:12.5px;color:var(--muted)}
 .t-ev .bar{width:3px;height:15px;border-radius:2px;background:color-mix(in srgb,var(--c) 85%,var(--fg));flex:none}
 .t-ev.now .tm{color:var(--ev);font-weight:700}
-.t-label.up{background:none;color:var(--muted);padding-left:0;font-weight:600}
-.t-item .t-meta.up{margin-left:0}
+.t-label.up{background:none;color:color-mix(in srgb,hsl(var(--comp-h,350) var(--comp-s,45%) 52%) 90%,var(--fg));padding-left:0;font-weight:600}
+.t-item .t-meta.up{margin-left:-4px;font-family:var(--font-body);font-weight:600;font-size:12px;color:color-mix(in srgb,hsl(var(--comp-h,350) var(--comp-s,45%) 52%) 90%,var(--fg))}
+.t-item.up .t-title{flex:0 1 auto}
 .t-item.up .t-title{color:var(--muted)}
 .t-empty{font-size:12.5px;color:var(--muted);padding:5px 0;margin:0}
 
@@ -1271,6 +1272,11 @@ const initial = () => (prefs.name || '').trim().slice(0, 1) || '나';
 /* 메인 컬러: 연한 색은 글자로 쓸 때 진하게 섞어서 읽히게 */
 function applyMain() {
   const c = prefs.main || DEFAULT_MAIN, props = ['--accent', '--accent-soft', '--on-accent'];
+  // 메인 컬러의 보색(색상환 반대편): '예정' 표시에 씀
+  { const n = parseInt(c.slice(1), 16), r = (n >> 16) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+    let h = d === 0 ? 0 : mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h = Math.round(((h * 60 + 360) % 360 + 180) % 360);
+    const l = (mx + mn) / 2, sat = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+    ROOT.style.setProperty('--comp-h', h); ROOT.style.setProperty('--comp-s', Math.round(Math.min(75, Math.max(50, sat * 100))) + '%'); }
   const light = !(prefs.main ? prefs.rawMain : true) && onColor(c) !== '#FFFFFF';
   ROOT.style.setProperty('--accent', light ? `color-mix(in srgb, ${c} 55%, var(--fg))` : c);
   ROOT.style.setProperty('--accent-soft', `color-mix(in srgb, ${c} 30%, var(--surface))`);
