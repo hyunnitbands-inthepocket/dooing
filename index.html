@@ -473,13 +473,15 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 @media (max-width:760px){
-  #today{grid-template-columns:minmax(0,1fr);gap:20px;padding:22px}
-  .t-blocks > .t-block{order:2}
-  .t-blocks > .t-ev-block{order:0}
-  .t-date{display:grid;grid-template-columns:1fr auto;column-gap:12px}
-  .t-ym,.t-day,.t-dow{grid-column:1}
+  /* 모바일도 웹처럼: 왼쪽에 날짜(+추가 버튼), 오른쪽에 일정, 할 일 묶음은 그 아래 전체 폭 */
+  #today{grid-template-columns:112px minmax(0,1fr);gap:18px 14px;padding:22px 20px}
+  .t-blocks{display:contents}
+  .t-blocks > .t-block{grid-column:1/-1}
+  .t-blocks > .t-ev-block,.t-blocks > .t-up-block{grid-column:2;grid-row:1}
+  .t-date{grid-column:1;grid-row:1}
   .t-day{font-size:56px}
-  .t-add{grid-column:2;grid-row:1/4;padding-top:0;align-self:end}
+  .t-add{margin-top:0;padding-top:14px}
+  .msplit button{padding:6px 9px}
 }
 @media (max-width:640px){
   /* iOS는 글자가 16px 미만인 입력칸을 누르면 화면을 확대해 버려서 모바일에서만 키움 */
