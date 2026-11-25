@@ -658,7 +658,8 @@ function holidaysOf(y) {
       const k = key(d), l = lunar(k);
       if (l && !l.leap) L[l.m + '-' + l.d] = k;
     }
-    const around = (k, name) => { const days = [-1, 0, 1].map(n => key(addDays(fromKey(k), n))); days.forEach(x => add(x, name)); groups.push({ days, rule: 'sun+' }); };
+    // 당일(가운데)만 '추석', 앞뒤는 '추석 연휴'
+    const around = (k, name) => { const days = [-1, 0, 1].map(n => key(addDays(fromKey(k), n))); days.forEach((x, i) => add(x, i === 1 ? name : name + ' 연휴')); groups.push({ days, rule: 'sun+' }); };
     if (L['1-1']) around(L['1-1'], '설날');
     if (L['4-8']) { add(L['4-8'], '부처님오신날'); groups.push({ days: [L['4-8']], rule: 'wk' }); }
     if (L['8-15']) around(L['8-15'], '추석');
