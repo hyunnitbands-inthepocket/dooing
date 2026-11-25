@@ -623,10 +623,17 @@ const lunarHTML = k => {
 };
 
 /* ---------- state ---------- */
-const STORE = 'harupan.v1';
+// 예전 이름(harupan.*)으로 저장된 데이터를 dooing.*으로 한 번 옮김 (기존 사용자 데이터 보존)
+try {
+  [['harupan.v1', 'dooing.v1'], ['harupan.prefs', 'dooing.prefs'], ['harupan.cv', 'dooing.cv'], ['harupan.v1.before-login', 'dooing.v1.before-login']].forEach(([o, n]) => {
+    const v = localStorage.getItem(o);
+    if (v !== null) { if (localStorage.getItem(n) === null) localStorage.setItem(n, v); localStorage.removeItem(o); }
+  });
+  localStorage.removeItem('harupan.ts');
+} catch (e) {}
+const STORE = 'dooing.v1';
 const state = { items: [], projects: [], calMonth: null, calView: 'event' };
-try { localStorage.removeItem('harupan.ts'); } catch (e) {} // 없앤 정사각형 시간 표시 설정 정리
-try { if (localStorage.getItem('harupan.cv') === 'task') state.calView = 'task'; } catch (e) {}
+try { if (localStorage.getItem('dooing.cv') === 'task') state.calView = 'task'; } catch (e) {}
 let clip = null; // 복사해 둔 할 일 { id }
 const taskChip = x => {
   const p = proj(x.project);
@@ -1200,7 +1207,7 @@ let tt;
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 2200); }
 
 /* ---------- 메뉴 · 마이페이지 ---------- */
-const PREF_KEY = 'harupan.prefs';
+const PREF_KEY = 'dooing.prefs';
 const prefs = (() => { try { return JSON.parse(localStorage.getItem(PREF_KEY)) || {}; } catch (e) { return {}; } })();
 const savePrefs = () => { try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch (e) {} queueCloudSave(); };
 const ROOT = document.documentElement, HOST_THEME = ROOT.getAttribute('data-theme');
@@ -1343,7 +1350,7 @@ document.addEventListener('click', e => {
   const rp = e.target.closest('[data-rep]');
   if (rp) { rp.parentElement.querySelectorAll('[data-rep]').forEach(b => { const on = b === rp; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); }); return; }
   const cvb = e.target.closest('[data-cv]');
-  if (cvb) { state.calView = cvb.dataset.cv; try { localStorage.setItem('harupan.cv', state.calView); } catch (err) {} clip = null; renderAll(); return; }
+  if (cvb) { state.calView = cvb.dataset.cv; try { localStorage.setItem('dooing.cv', state.calView); } catch (err) {} clip = null; renderAll(); return; }
   const tc = e.target.closest('[data-tid]');
   if (tc) {
     if (clip && clip.id !== tc.dataset.tid) pasteTo(tc.closest('[data-day]').dataset.day);
