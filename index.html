@@ -240,7 +240,8 @@ body.swiping-row{user-select:none;-webkit-user-select:none}
 .box:hover{border-color:var(--c)}
 .t-item.done .box{background:var(--c);border-color:color-mix(in srgb,var(--c) 80%,var(--fg));color:var(--oc,#fff)}
 .t-title{flex:1;min-width:0;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
-.t-item.done .t-title{color:var(--muted)}
+.t-item.done .t-title{color:var(--muted);text-decoration:line-through}
+.t-item.done .t-meta,.t-item.done .t-meta.up{color:var(--muted)}
 .t-meta{font-family:var(--font-num);font-size:11.5px;color:var(--muted);flex:none}
 /* 할 일: 시간·'어제' 표시를 제목 바로 옆에 */
 .t-item.tk .t-title{flex:0 1 auto}
@@ -258,6 +259,8 @@ body.row-dragging,body.row-dragging *{cursor:grabbing!important}
 @media (max-width:560px){.t-up-block .t-list{grid-template-columns:minmax(0,1fr);grid-template-rows:none;grid-auto-flow:row}}
 .t-up-block .t-item:nth-child(2){opacity:.93}.t-up-block .t-item:nth-child(3){opacity:.86}.t-up-block .t-item:nth-child(4){opacity:.79}.t-up-block .t-item:nth-child(5){opacity:.72}
 .t-up-block .t-item:nth-child(6){opacity:.65}.t-up-block .t-item:nth-child(7){opacity:.58}.t-up-block .t-item:nth-child(8){opacity:.5}.t-up-block .t-item:nth-child(9){opacity:.42}.t-up-block .t-item:nth-child(10){opacity:.34}
+/* 체크한 오늘·예정 할 일은 사라지지 않고 취소선 + 확 흐리게 (지난 할 일만 체크하면 사라짐) */
+.t-item.tk.done,.t-up-block .t-item.tk.done{opacity:.3}
 .t-label.up{background:none;color:hsl(var(--comp-h,350) var(--comp-s,40%) var(--comp-l,66%));padding-left:0;font-weight:600}
 .t-item .t-meta.up{margin:0 -3px 0 0;font-family:var(--font-body);font-weight:600;font-size:12px;color:hsl(var(--comp-h,350) var(--comp-s,40%) var(--comp-l,66%))}
 .t-item.up .t-title{flex:0 1 auto}
@@ -928,7 +931,7 @@ function renderToday() {
     const ups = [];
     for (let n = 1; n <= 7 && ups.length < 10; n++) { // 예정된 일정은 설정과 상관없이 앞으로 일주일, 최대 10개
       const k = key(addDays(t, n));
-      dayItems(k).filter(x => !x.done).forEach(x => ups.push({ ...x, date: k }));
+      dayItems(k).forEach(x => ups.push({ ...x, date: k }));
     }
     const del = '<button class="t-del" data-act="del" aria-label="삭제" title="삭제"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9.5 7V4.8c0-.4.3-.8.8-.8h3.4c.5 0 .8.4.8.8V7M6.5 7l.8 12.1c.1.8.7 1.4 1.5 1.4h6.4c.8 0 1.4-.6 1.5-1.4L17.5 7M10 11v6M14 11v6"/></svg></button>';
     const rows = ups.slice(0, 10).map(x => {
@@ -936,7 +939,7 @@ function renderToday() {
       const when = `<span class="t-meta up">${boxDate(x.date)}${x.time ? ' ' + x.time : ''}</span>`;
       return x.type === 'event'
         ? `<li class="t-item t-ev up" data-id="${x.id}"><div class="t-row"><span class="bar" style="--c:${p ? p.color : 'var(--ev)'}"></span>${when}<button class="t-title" data-act="edit">${esc(x.title)}</button></div>${del}</li>`
-        : `<li class="t-item tk up" data-id="${x.id}" style="--c:${c};--oc:${onColor(c)}"><div class="t-row"><button class="box" data-act="toggle" aria-label="완료로 표시">${IC.check}</button>${when}<button class="t-title" data-act="edit">${esc(x.title)}</button></div>${del}</li>`;
+        : `<li class="t-item tk up ${x.done ? 'done' : ''}" data-id="${x.id}" style="--c:${c};--oc:${onColor(c)}"><div class="t-row"><button class="box" data-act="toggle" aria-label="${x.done ? '완료 취소' : '완료로 표시'}">${IC.check}</button>${when}<button class="t-title" data-act="edit">${esc(x.title)}</button></div>${del}</li>`;
     }).join('');
     if (rows) upBlock = `<div class="t-block t-up-block"><span class="t-label up">예정된 일정</span><ul class="t-list">${rows}</ul></div>`;
   }
