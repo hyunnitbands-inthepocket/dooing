@@ -134,7 +134,7 @@ body.pal-dragging,body.pal-dragging *{cursor:grabbing!important}
 #today{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:26px 28px;display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px}
 .t-date{display:flex;flex-direction:column}
 .t-ym{display:flex;align-items:baseline;gap:6px;font-size:13px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
-.t-ym b{font-size:16px;font-weight:800;color:var(--fg)}
+.t-ym b{font-size:16px;font-weight:800;color:var(--fg);font-variant-numeric:proportional-nums;letter-spacing:-.03em}
 .t-day{font-family:var(--font-num);font-size:68px;font-weight:800;line-height:1;letter-spacing:-.04em;margin-top:4px;color:var(--accent)}
 .t-dow{font-size:15px;font-weight:600;margin-top:6px}
 .t-bar{height:3px;background:var(--surface-2);border-radius:2px;overflow:hidden;margin-top:6px}
@@ -198,6 +198,8 @@ body.row-dragging,body.row-dragging *{cursor:grabbing!important}
 .cal-mid{display:flex;align-items:center;gap:12px}
 .cal-h h2{margin:0;display:flex;align-items:baseline;justify-content:center;gap:.4em;font-size:32px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;min-width:4.2em;line-height:1.1}
 .ym-y{font-size:.5em;font-weight:700;color:var(--muted);letter-spacing:.02em}
+/* 달 숫자: 오늘 박스 날짜처럼 숫자를 붙이고 자간을 좁게 (고정폭 숫자 끔) */
+.ym-m{font-family:var(--font-num);font-variant-numeric:proportional-nums;font-size:1.3em;font-weight:800;letter-spacing:-.05em;line-height:1}
 .cal-right{justify-self:end}
 .arrow{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:var(--muted)}
 .arrow:hover{background:var(--surface-2);color:var(--fg)}
@@ -860,9 +862,9 @@ function saveForm() {
     if (r.prio) prio = r.prio;
     if (r.dur) dur = r.dur;
     if (r.projectName) {
-      let p = cats(pop.type).find(x => x.name === r.projectName);
-      if (!p) { p = { id: 'p' + Date.now().toString(36), name: r.projectName, color: PCOLORS[cats(pop.type).length % PCOLORS.length], kind: pop.type }; state.projects.push(p); }
-      project = p.id;
+      // 있는 카테고리만 연결. 없는 이름이면 카테고리를 만들지 않고 '#이름'을 제목에 그대로 남김 (카테고리 추가는 마이페이지에서만)
+      const p = cats(pop.type).find(x => x.name === r.projectName);
+      if (p) project = p.id; else title = `${title} #${r.projectName}`;
     }
   }
   if (!title) { err.textContent = '제목을 입력해 주세요.'; err.hidden = false; return; }
@@ -909,6 +911,14 @@ function pasteTo(k) {
 
 /* ---------- 마이페이지: 카테고리 칩 · 편집 ---------- */
 let catEdit = null;
+// 이름을 비운 채 편집을 닫으면: 쓰는 곳 없는 카테고리는 만들지 않은 걸로 치고 지우고, 쓰는 곳이 있으면 '이름 없음'
+function dropUnnamed(id) {
+  const p = id && proj(id);
+  if (!p || p.name.trim()) return;
+  if (state.items.some(i => i.project === id)) p.name = '이름 없음';
+  else state.projects = state.projects.filter(x => x.id !== id);
+  save();
+}
 function renderCats(withEditor = true) {
   ['event', 'task'].forEach(kind => {
     $('#cats-' + kind).innerHTML = cats(kind).map(p =>
@@ -921,7 +931,7 @@ function renderCats(withEditor = true) {
   const cur = (p.color || '').toLowerCase();
   ed.hidden = false;
   ed.innerHTML = `<div class="card-h">${p.kind === 'event' ? '일정' : '할 일'} 카테고리 편집</div>
-    <label class="field">이름<input id="ce-name" maxlength="12" value="${esc(p.name)}" autocomplete="off"></label>
+    <label class="field">이름<input id="ce-name" maxlength="12" value="${esc(p.name)}" placeholder="카테고리 이름" autocomplete="off"></label>
     <div class="ce-colors" role="radiogroup" aria-label="색상">${allColors().map((row, ri) => `<div class="ce-row ${ri >= CAT_COLORS.length ? 'custom' : ''}">${row.map(c =>
       `<button class="ce-c ${c.toLowerCase() === cur ? 'on' : ''}" role="radio" aria-checked="${c.toLowerCase() === cur}" aria-label="색 ${c}" data-cc="${c}" style="--sw:${c}"></button>`).join('')}</div>`).join('')}</div>
     <div class="pop-actions"><button class="btn danger" id="ce-del">삭제</button><span class="grow"></span><button class="btn primary" id="ce-done">완료</button></div>`;
@@ -1294,17 +1304,17 @@ document.addEventListener('click', e => {
   const cc = e.target.closest('[data-cc]');
   if (cc) { const p = proj(catEdit); if (p) { p.color = cc.dataset.cc; save(); renderCats(); renderAll(); } return; }
   const cb = e.target.closest('[data-cat]');
-  if (cb) { catEdit = catEdit === cb.dataset.cat ? null : cb.dataset.cat; renderCats(); if (catEdit) $('#ce-name').focus(); return; }
+  if (cb) { const next = catEdit === cb.dataset.cat ? null : cb.dataset.cat; dropUnnamed(catEdit); catEdit = next; renderCats(); renderAll(); if (catEdit) $('#ce-name').focus(); return; }
   const ca = e.target.closest('[data-cat-add]');
   if (ca) {
     const kind = ca.dataset.catAdd, base = CAT_COLORS[0];
-    const np = { id: 'p' + Date.now().toString(36), kind, name: '새 카테고리', color: base[cats(kind).length % base.length] };
+    const np = { id: 'p' + Date.now().toString(36), kind, name: '', color: base[cats(kind).length % base.length] };
     state.projects.push(np); save(); catEdit = np.id; renderCats(); renderAll();
     const nm = $('#ce-name'); nm.focus(); nm.select(); return;
   }
   if (e.target.closest('#ce-done')) {
-    const p = proj(catEdit); if (p && !p.name.trim()) { p.name = '이름 없음'; save(); renderAll(); }
-    catEdit = null; renderCats(); return;
+    dropUnnamed(catEdit);
+    catEdit = null; renderCats(); renderAll(); return;
   }
   const cdel = e.target.closest('#ce-del');
   if (cdel) {
