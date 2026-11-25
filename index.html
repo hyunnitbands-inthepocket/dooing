@@ -22,7 +22,7 @@ img{max-width:100%}
   --fg:#17202A; --muted:#66727E; --accent:#0E7A6A; --accent-soft:#D8EEE9; --on-accent:#FFFFFF;
   --ev:#3D5BD9; --ev-soft:#E2E7FB;
   --p1:#D64535; --p2:#C98010; --p3:#3D6FD6; --p0:#A3ADB7;
-  --sun:#D64535; --sat:#3D6FD6; --moon:#A3B6D3; --today-bg:#FFFBE3;
+  --sun:#D64535; --sat:#3D6FD6; --moon:#A3B6D3; --today-bg:#FFFBE3; --hlp:55%; --hls:20%;
   --shadow:0 1px 2px rgb(16 24 32 / .06), 0 10px 28px rgb(16 24 32 / .07);
   --shadow-pop:0 4px 10px rgb(16 24 32 / .08), 0 22px 48px rgb(16 24 32 / .18);
   --font-body:"Pretendard","Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
@@ -33,7 +33,7 @@ img{max-width:100%}
   --fg:#E7EAEF; --muted:#939BAA; --accent:#3FC2AB; --accent-soft:#16372F; --on-accent:#0A1A16;
   --ev:#7F97FF; --ev-soft:#212A4A;
   --p1:#F06A5B; --p2:#EFA53A; --p3:#739CFF; --p0:#5E6776;
-  --sun:#F06A5B; --sat:#739CFF; --moon:#6F84A6; --today-bg:#2E2B1C;
+  --sun:#F06A5B; --sat:#739CFF; --moon:#6F84A6; --today-bg:#2E2B1C; --hlp:30%; --hls:28%;
   --shadow:0 1px 2px rgb(0 0 0 / .35), 0 10px 28px rgb(0 0 0 / .3);
   --shadow-pop:0 4px 10px rgb(0 0 0 / .4), 0 22px 48px rgb(0 0 0 / .55);
   color-scheme:dark;
@@ -43,7 +43,7 @@ img{max-width:100%}
   --fg:#E7EAEF; --muted:#939BAA; --accent:#3FC2AB; --accent-soft:#16372F; --on-accent:#0A1A16;
   --ev:#7F97FF; --ev-soft:#212A4A;
   --p1:#F06A5B; --p2:#EFA53A; --p3:#739CFF; --p0:#5E6776;
-  --sun:#F06A5B; --sat:#739CFF; --moon:#6F84A6; --today-bg:#2E2B1C;
+  --sun:#F06A5B; --sat:#739CFF; --moon:#6F84A6; --today-bg:#2E2B1C; --hlp:30%; --hls:28%;
   --shadow:0 1px 2px rgb(0 0 0 / .35), 0 10px 28px rgb(0 0 0 / .3);
   --shadow-pop:0 4px 10px rgb(0 0 0 / .4), 0 22px 48px rgb(0 0 0 / .55);
   color-scheme:dark;
@@ -220,11 +220,12 @@ body.row-dragging,body.row-dragging *{cursor:grabbing!important}
 .cell:hover{background:var(--surface-2)}
 .cell.out{background:color-mix(in srgb,var(--surface-2) 45%,var(--surface))}
 .cell.out .dnum{opacity:.45}
-.cell.sel{box-shadow:inset 0 0 0 2px var(--accent)}
+.cell.sel{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--accent) 35%,transparent)}
 .dtop{display:flex;flex-direction:column;align-items:center;min-width:0;margin-bottom:2px}
 .dnum{font-family:var(--font-num);font-weight:600;font-size:13px;width:24px;height:24px;display:grid;place-items:center;border-radius:50%;flex:none}
 .cell.sun .dnum,.cell.hd .dnum{color:var(--sun)} .cell.sat .dnum{color:var(--sat)}
-.cell.today,.cell.today:hover{background:var(--today-bg)}
+/* 오늘: 배경색 없이 칸 테두리를 메인 컬러로 살짝 두껍게 (선택 표시보다 위) */
+.cell.today{box-shadow:inset 0 0 0 2.5px var(--accent)}
 .cell.today .dnum{color:var(--accent);font-weight:800}
 .cell.today .dnum.pulse{animation:todayPulse 1.2s ease-out}
 @keyframes todayPulse{
@@ -294,6 +295,20 @@ body.row-dragging,body.row-dragging *{cursor:grabbing!important}
 .allday.on{background:var(--ev);border-color:var(--ev);color:var(--surface)}
 .evtime.ad,.t-ev.ad .tm{font-size:11px;letter-spacing:0;font-weight:600}
 .cchip.ad .ct{font-weight:500}
+.ev-ic{display:inline-flex;align-items:center;justify-content:center;flex:none;color:var(--fg);line-height:1}
+.ev-ic svg{display:block;width:14px;height:14px}
+.cchip.ev{display:flex;align-items:center}
+.cchip.ev > b{flex:none}
+.cchip .ev-ic{margin-right:1px}
+.cchip .ev-ic + .ct{padding-left:.12em}
+.t-ev .tm{display:flex;align-items:center}
+.evtime .ev-ic{display:flex}
+.t-ev .tm .ev-ic svg,.evtime .ev-ic svg{width:18px;height:18px}
+/* all day 일정: 형광펜으로 그은 듯한 하이라이트 (카테고리 색의 파스텔톤, 다크 모드는 어둡게 섞임) */
+.cchip.ev.ad{padding-inline:2px}
+.cchip.ev.ad .ct{padding:0 .3em;border-radius:.9em .25em .8em .3em;
+  background-image:linear-gradient(-100deg,color-mix(in srgb,var(--hl) 35%,transparent),var(--hl) 12%,var(--hl) 88%,color-mix(in srgb,var(--hl) 30%,transparent));
+  background-repeat:no-repeat;background-size:100% 74%;background-position:0 80%;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 .cat-group{display:flex;flex-direction:column;gap:8px}
 .cat-label{font-size:12px;font-weight:600;color:var(--muted)}
 .cat-chips{display:flex;flex-wrap:wrap;gap:8px}
@@ -477,6 +492,17 @@ const CAT_COLORS = [
   ['#EDDCD2', '#FFF1E6', '#FDE2E4', '#FAD2E1', '#C5DEDD', '#DBE7E4', '#F0EFEB', '#D6E2E9', '#BCD4E6', '#99C1DE'],
 ];
 const REP_LABEL = { weekly: '매주', monthly: '매달', yearly: '매년' };
+// 일정 아이콘 (색 없이 선만, 손으로 그린 느낌)
+const IC_CAKE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l3.6-10.6 7 7z"/><path d="M8.6 12.6l2.8 2.8"/><path d="M12.6 4c.6 1.3.3 2.6-.9 3.4"/><path d="M20 11.4c-1.3-.6-2.6-.3-3.4.9"/><path d="M16.4 3.6v1.6M19.8 6.1l-1.1 1.1M20.6 3.8h.01M14.8 8.6h.01"/></svg>'; // 생일: 폭죽
+const IC_STAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8.5 8h7M8.5 11.5h7M8.5 15h3"/><path d="M13.6 15.6l1.3 1.3 2.4-2.6"/></svg>'; // 시험: 시험지
+// '생일' 카테고리 일정은 케이크, '시험' 카테고리 all day 일정은 별
+function evIcon(x) {
+  if (x.type !== 'event') return '';
+  const n = (proj(x.project) || {}).name || '';
+  if (n.includes('생일')) return `<span class="ev-ic" role="img" aria-label="생일">${IC_CAKE}</span>`;
+  if (n.includes('시험') && !x.time) return `<span class="ev-ic" role="img" aria-label="시험">${IC_STAR}</span>`;
+  return '';
+}
 const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
 function fmtTime(t) { if (!t) return ''; const [h, m] = t.split(':').map(Number); return `${h < 12 ? '오전' : '오후'} ${h % 12 || 12}:${pad(m)}`; }
 function endTime(t, dur) { const e = Math.min(toMin(t) + (dur || 60), 1439); return `${pad(Math.floor(e / 60))}:${pad(e % 60)}`; }
@@ -584,7 +610,8 @@ function seed() {
     { id: 'e-work', name: '업무', color: '#4F5FD9', kind: 'event' },
     { id: 'e-life', name: '개인', color: '#D9822B', kind: 'event' },
     { id: 'e-study', name: '공부', color: '#A24FCF', kind: 'event' },
-    { id: 'e-anniv', name: '기념일', color: '#FAD2E1', kind: 'event' },
+    { id: 'e-anniv', name: '생일', color: '#FAD2E1', kind: 'event' },
+    { id: 'e-exam', name: '시험', color: '#C8C7D6', kind: 'event' },
   ];
   const items = [
     { title: '데일리 스탠드업', type: 'event', date: d(0), time: '09:30', dur: 30, project: 'work' },
@@ -604,6 +631,7 @@ function seed() {
     { title: '친구 생일 저녁', type: 'event', date: d(9), time: '19:00', dur: 120, project: 'life' },
     { title: '팀장님 생일', type: 'event', date: d(0), project: 'anniv', repeat: 'yearly' },
     { title: '엄마 생신', type: 'event', date: d(5), project: 'anniv', repeat: 'yearly' },
+    { title: 'TOEIC 시험', type: 'event', date: d(3), project: 'exam' },
     { title: '자동차 보험 갱신', type: 'task', date: d(12), project: 'life', prio: 1 },
     { title: '팀 회식', type: 'event', date: d(-3), time: '18:30', dur: 150, project: 'work' },
     { title: '알고리즘 강의 5강', type: 'task', date: d(-2), project: 'study', done: true },
@@ -638,7 +666,9 @@ const prioRank = p => (p ? p : 4);
 const byTask = (a, b) => ((a.order ?? 1e9) - (b.order ?? 1e9)) || (a.time || '99').localeCompare(b.time || '99');
 const nextOrder = () => Math.max(0, ...state.items.filter(x => x.type === 'task').map(x => x.order || 0)) + 1;
 // 일정: 시간 없는 all day 일정이 맨 위(가나다순), 그다음 시간순
-const byEvent = (a, b) => (!!a.time - !!b.time) || (a.time ? a.time.localeCompare(b.time) : a.title.localeCompare(b.title, 'ko'));
+// all day 안에서는 생일 → 시험 → 나머지, 같은 묶음끼리는 가나다순
+const adRank = x => { const n = (proj(x.project) || {}).name || ''; return n.includes('생일') ? 0 : n.includes('시험') ? 1 : 2; };
+const byEvent = (a, b) => (!!a.time - !!b.time) || (a.time ? a.time.localeCompare(b.time) : (adRank(a) - adRank(b)) || a.title.localeCompare(b.title, 'ko'));
 // 반복 일정: 시작일 이후 같은 요일(매주) · 같은 날짜(매달) · 같은 월일(매년)에 나타남
 const occursOn = (x, k) => {
   if (x.date === k) return true;
@@ -702,7 +732,7 @@ function rowHTML(it, opt = {}) {
   const tools = opt.tools && it.type === 'task'
     ? `<span class="row-tools"><button class="rt" data-clip="copy" aria-label="복사해서 다른 날짜에 붙여넣기" title="복사">${IC_COPY}</button><button class="rt" data-clip="move" aria-label="다른 날짜로 옮기기" title="옮기기">${IC_MOVE}</button></span>` : '';
   const lead = it.type === 'event'
-    ? `<span class="evtime ${it.time ? '' : 'ad'}" style="--c:${p ? p.color : 'var(--ev)'}">${it.time || 'all day'}</span>`
+    ? `<span class="evtime ${it.time ? '' : 'ad'}" style="--c:${p ? p.color : 'var(--ev)'}">${it.time || evIcon(it) || 'all day'}</span>`
     : `<button class="check" data-act="toggle" aria-label="${it.done ? '완료 취소' : '완료로 표시'}">${IC.check}</button>`;
   return `<li class="row ${it.done ? 'done' : ''} ${past ? 'past' : ''}" data-id="${it.id}">${lead}<button class="row-main" data-act="edit"><span class="row-title">${esc(it.title)}</span>${meta.length ? `<span class="meta">${meta.join('')}</span>` : ''}</button>${tools}</li>`;
 }
@@ -719,7 +749,7 @@ function renderToday() {
   const evRows = events.map(e => {
     const p = proj(e.project), st = e.time ? toMin(e.time) : 0, en = e.time ? toMin(endTime(e.time, e.dur)) : 0;
     const cls = !e.time ? 'ad' : en < nowM ? 'past' : (st <= nowM ? 'now' : '');
-    return `<li class="t-item t-ev ${cls}" data-id="${e.id}"><div class="t-row"><span class="tm">${e.time || 'all day'}</span><span class="bar" style="--c:${p ? p.color : 'var(--ev)'}"></span><button class="t-title" data-act="edit">${esc(e.title)}</button></div><button class="t-del" data-act="del" aria-label="삭제" title="삭제"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9.5 7V4.8c0-.4.3-.8.8-.8h3.4c.5 0 .8.4.8.8V7M6.5 7l.8 12.1c.1.8.7 1.4 1.5 1.4h6.4c.8 0 1.4-.6 1.5-1.4L17.5 7M10 11v6M14 11v6"/></svg></button></li>`;
+    return `<li class="t-item t-ev ${cls}" data-id="${e.id}"><div class="t-row"><span class="tm">${e.time || evIcon(e) || 'all day'}</span><span class="bar" style="--c:${p ? p.color : 'var(--ev)'}"></span><button class="t-title" data-act="edit">${esc(e.title)}</button></div><button class="t-del" data-act="del" aria-label="삭제" title="삭제"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9.5 7V4.8c0-.4.3-.8.8-.8h3.4c.5 0 .8.4.8.8V7M6.5 7l.8 12.1c.1.8.7 1.4 1.5 1.4h6.4c.8 0 1.4-.6 1.5-1.4L17.5 7M10 11v6M14 11v6"/></svg></button></li>`;
   }).join('');
   const evBlock = !evRows ? '' : `<div class="t-block t-ev-block"><button class="t-label" style="--c:var(--accent)" data-new="event" data-d="${tk}" aria-label="오늘 일정 추가">일정</button>
     <ul class="t-list">${evRows}</ul></div>`;
@@ -727,7 +757,7 @@ function renderToday() {
   const gid = i => (proj(i.project) ? i.project : '');
   const all = [...overdue, ...tasks];
   const groups = cats('task').map(p => ({ id: p.id, name: p.name, color: p.color }));
-  if (all.some(i => gid(i) === '')) groups.push({ id: '', name: '기타', color: 'var(--muted)' });
+  if (all.some(i => gid(i) === '')) groups.push({ id: '', name: '기타', color: 'var(--accent)' });
   const taskBlocks = groups.map(g => {
     const its = all.filter(i => gid(i) === g.id).sort((a, b) => ((b.date < tk) - (a.date < tk)) || byTask(a, b));
     if (!its.length) return ''; // 오늘 할 일이 없는 카테고리는 칩도 숨김
@@ -764,10 +794,12 @@ function renderCal() {
     const cls = ['cell', d.getMonth() !== m && 'out', d.getDay() === 0 && 'sun', d.getDay() === 6 && 'sat', holiday(k) && 'hd', k === tk && 'today', pop.open && pop.day === k && 'sel', lunar(k)?.d === 15 && 'fullmoon'].filter(Boolean).join(' ');
     const taskView = state.calView === 'task', sq = !taskView && state.timeStyle === 'square';
     const allDay = items.filter(x => !x.time), timed = items.filter(x => x.time);
-    const adChip = x => `<span class="cchip ev ad"><span class="ct">${esc(x.title)}</span></span>`;
+    // all day 하이라이트 색: 이미 연한 색은 그대로, 진한 색은 파스텔로 (비율은 테마별 --hlp / --hls)
+    const hl = c => `color-mix(in srgb, ${c} ${/^#/.test(c) && onColor(c) !== '#FFFFFF' ? 'var(--hlp)' : 'var(--hls)'}, transparent)`;
+    const adChip = x => { const c = (proj(x.project) || {}).color || 'var(--accent)'; return `<span class="cchip ev ad" style="--hl:${hl(c)}">${evIcon(x)}<span class="ct">${esc(x.title)}</span></span>`; };
     const chips = taskView ? items.slice(0, 4).map(taskChip).join('') : sq
       ? allDay.map(adChip).join('') + (timed.length ? `<span class="sqgrid">${timed.map(x => `<span class="tsq" title="${x.time} ${esc(x.title)}"><span>${x.time.slice(0, 2)}</span><span>${x.time.slice(3, 5)}</span></span>`).join('')}</span>` : '')
-      : items.slice(0, 3).map(x => x.time ? `<span class="cchip ev">${timeHTML(x.time)}<span class="ct">${esc(x.title)}</span></span>` : adChip(x)).join('');
+      : items.slice(0, 3).map(x => x.time ? `<span class="cchip ev">${timeHTML(x.time)}${evIcon(x)}<span class="ct">${esc(x.title)}</span></span>` : adChip(x)).join('');
     const lim = taskView ? 4 : 3;
     const more = !sq && items.length > lim ? `<span class="cmore">+${items.length - lim}개 더</span>` : '';
     const dots = items.slice(0, 4).map(() => taskView ? '<i></i>' : '<i class="ev"></i>').join('');
