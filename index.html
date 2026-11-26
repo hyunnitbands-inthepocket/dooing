@@ -319,7 +319,8 @@ body.row-dragging,body.row-dragging *{cursor:grabbing!important}
 .cell.out .dnum{opacity:.45}
 .cell.sel{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--accent) 35%,transparent)}
 .dtop{display:flex;flex-direction:column;align-items:center;min-width:0;margin-bottom:2px}
-.dstar{position:absolute;right:calc(100% - 4px);top:50%;width:18px;height:18px;transform:translateY(-56%);fill:none;stroke:var(--accent);stroke-width:10;stroke-linecap:round;stroke-linejoin:round;pointer-events:none;overflow:visible}
+.dn{position:relative;isolation:isolate;display:inline-block;line-height:1}
+.dstar{position:absolute;z-index:-1;right:calc(100% - 3px);top:50%;width:17px;height:17px;transform:translateY(-62%);fill:none;stroke:var(--accent);stroke-width:10;stroke-linecap:round;stroke-linejoin:round;pointer-events:none;overflow:visible}
 .star-btn{width:28px;height:28px;margin-right:-2px;display:grid;place-items:center;border-radius:50%;color:var(--muted);flex:none}
 .star-btn:hover{background:var(--surface-2)}
 .star-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round}
@@ -342,8 +343,8 @@ body.row-dragging,body.row-dragging *{cursor:grabbing!important}
 .lunar{display:flex;align-items:center;gap:2px;margin-top:1px;font-size:9.5px;line-height:1.2;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 .lunar .lt{opacity:.7}
 .t-day.hd{color:var(--sun)}
-.t-day{position:relative;isolation:isolate;align-self:flex-start}
-.t-day .tstar{position:absolute;z-index:-1;left:50%;top:50%;width:108px;height:106px;transform:translate(-50%,-52%);fill:none;stroke:var(--accent);stroke-width:7;stroke-linecap:round;stroke-linejoin:round;opacity:.32;pointer-events:none}
+.t-day{position:relative;align-self:flex-start}
+.t-day .tstar{position:absolute;left:calc(100% - 2px);top:-4px;width:22px;height:21px;fill:none;stroke:var(--accent);stroke-width:9;stroke-linecap:round;stroke-linejoin:round;pointer-events:none;overflow:visible}
 .cchips{display:flex;flex-direction:column;gap:2px;min-width:0}
 .cchip{display:block;font-size:11.5px;line-height:1.4;padding:1px 5px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cchip.ev{color:var(--fg)}
@@ -969,7 +970,7 @@ function renderToday() {
   $('#today').innerHTML = `
     <div class="t-date">
       <div class="t-ym"><span>${t.getFullYear()}</span><b>${pad(t.getMonth() + 1)}</b></div>
-      <div class="t-day ${holiday(tk) ? 'hd' : ''}" ${holiday(tk) ? `title="${holiday(tk)}"` : ''}>${isStar(tk) ? starSVG('tstar') : ''}<span>${t.getDate()}</span></div>
+      <div class="t-day ${holiday(tk) ? 'hd' : ''}" ${holiday(tk) ? `title="${holiday(tk)}"` : ''}><span>${t.getDate()}</span>${isStar(tk) ? starSVG('tstar') : ''}</div>
       <div class="t-dow">${DOW[t.getDay()]}요일</div>
       <div class="t-add"><div class="msplit"><button data-new="event" data-d="${tk}">+ 일정</button><span class="div"></span><button data-new="task" data-d="${tk}">+ 할 일</button></div></div>
     </div>
@@ -1001,7 +1002,7 @@ function renderCal() {
     const more = items.length > lim ? `<span class="cmore">+${items.length - lim}개 더</span>` : '';
     const dots = items.slice(0, 4).map(x => (allView ? x.type === 'task' : taskView) ? '<i></i>' : '<i class="ev"></i>').join('');
     html += `<button class="${cls}" data-day="${k}" aria-label="${longDate(k)}${holiday(k) ? ' ' + holiday(k) : ''}${isStar(k) ? ' 중요한 날' : ''}, ${allView ? '일정·할 일' : taskView ? '할 일' : '일정'} ${items.length}개">
-      <span class="dtop"><span class="dnum">${isStar(k) ? starSVG('dstar') : ''}${d.getDate()}</span>${holiday(k) ? `<span class="hol">${holiday(k)}</span>` : ''}${lunarHTML(k)}</span>
+      <span class="dtop"><span class="dnum">${isStar(k) ? `<span class="dn">${starSVG('dstar')}${d.getDate()}</span>` : d.getDate()}</span>${holiday(k) ? `<span class="hol">${holiday(k)}</span>` : ''}${lunarHTML(k)}</span>
       <span class="cchips">${chips}${more}</span><span class="dots">${dots}</span></button>`;
   }
   $('#grid').innerHTML = html;
