@@ -1139,7 +1139,12 @@ function saveForm() {
   if (it) Object.assign(it, data);
   else { it = { id: newId(), done: false, ...data, ...(data.type === 'task' ? { order: nextOrder() } : {}) }; state.items.push(it); }
   save();
-  if (date) { const d = fromKey(date); state.calMonth = new Date(d.getFullYear(), d.getMonth(), 1); }
+  if (date) {
+    // 지금 보이는 달력 칸(앞뒤 달 날짜 포함) 안이면 그대로 머물고, 화면에 없는 날짜일 때만 그 달로 이동
+    const m0 = state.calMonth, first = new Date(m0.getFullYear(), m0.getMonth(), 1), start = addDays(first, -first.getDay());
+    const cells = Math.ceil((first.getDay() + new Date(m0.getFullYear(), m0.getMonth() + 1, 0).getDate()) / 7) * 7;
+    if (date < key(start) || date > key(addDays(start, cells - 1))) { const d = fromKey(date); state.calMonth = new Date(d.getFullYear(), d.getMonth(), 1); }
+  }
   toast(`${pop.editId ? '저장했어요' : (pop.type === 'event' ? '일정 추가' : '할 일 추가')}: ${title}`);
   if (pop.from === 'day' && date) { pop.mode = 'day'; pop.day = date; pop.editId = null; renderAll(); }
   else closePop();
