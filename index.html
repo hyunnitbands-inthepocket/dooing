@@ -319,12 +319,11 @@ body.row-dragging,body.row-dragging *{cursor:grabbing!important}
 .cell.out .dnum{opacity:.45}
 .cell.sel{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--accent) 35%,transparent)}
 .dtop{display:flex;flex-direction:column;align-items:center;min-width:0;margin-bottom:2px}
-.dstar{position:absolute;right:calc(100% - 4px);top:50%;width:19px;height:19px;transform:translateY(-58%) rotate(-9deg);fill:rgb(255 196 61 / .3);stroke:#E0A100;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;pointer-events:none;overflow:visible}
-.dstar .s2,.star-btn .s2{fill:none;stroke-width:1.1;opacity:.6}
+.dstar{position:absolute;right:calc(100% - 4px);top:50%;width:18px;height:18px;transform:translateY(-56%);fill:none;stroke:var(--accent);stroke-width:10;stroke-linecap:round;stroke-linejoin:round;pointer-events:none;overflow:visible}
 .star-btn{width:28px;height:28px;margin-right:-2px;display:grid;place-items:center;border-radius:50%;color:var(--muted);flex:none}
 .star-btn:hover{background:var(--surface-2)}
-.star-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.star-btn.on svg{fill:rgb(255 196 61 / .35);stroke:#E0A100}
+.star-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round}
+.star-btn.on svg{stroke:var(--accent);stroke-width:10}
 .dnum{position:relative;font-family:var(--font-num);font-weight:600;font-size:13px;width:24px;height:24px;display:grid;place-items:center;border-radius:50%;flex:none}
 .cell.sun .dnum,.cell.hd .dnum{color:var(--sun)} .cell.sat .dnum{color:var(--sat)} .cell.sat.hd .dnum{color:var(--sun)}
 /* 오늘: 배경색 없이 칸 테두리를 메인 컬러로 살짝 두껍게 (선택 표시보다 위) */
@@ -343,6 +342,8 @@ body.row-dragging,body.row-dragging *{cursor:grabbing!important}
 .lunar{display:flex;align-items:center;gap:2px;margin-top:1px;font-size:9.5px;line-height:1.2;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 .lunar .lt{opacity:.7}
 .t-day.hd{color:var(--sun)}
+.t-day{position:relative;isolation:isolate;align-self:flex-start}
+.t-day .tstar{position:absolute;z-index:-1;left:50%;top:50%;width:108px;height:106px;transform:translate(-50%,-52%);fill:none;stroke:var(--accent);stroke-width:7;stroke-linecap:round;stroke-linejoin:round;opacity:.32;pointer-events:none}
 .cchips{display:flex;flex-direction:column;gap:2px;min-width:0}
 .cchip{display:block;font-size:11.5px;line-height:1.4;padding:1px 5px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cchip.ev{color:var(--fg)}
@@ -743,10 +744,8 @@ function holidaysOf(y) {
   return H;
 }
 // 중요한 날: 손으로 그린 듯한 별. 날짜 목록은 prefs.stars에 저장(계정에도 같이 저장됨)
-const STAR_D = 'M12.4 2.9C13.3 5.2 14 7.1 14.9 8.8C17 8.9 19 9.1 21.2 9.6C19.5 11.2 17.9 12.6 16.2 13.9C16.8 16 17.3 18 17.7 20.4C15.7 19.3 14 18.1 12.1 16.9C10.3 18.2 8.5 19.4 6.3 20.6C6.8 18.3 7.5 16.3 8.2 14.2C6.6 12.9 5 11.6 3.2 9.8C5.4 9.5 7.5 9.4 9.6 9.3C10.4 7.3 11.2 5.3 12.9 2.6';
-// 겹선: 연필로 한 번 더 따라 그은 느낌
-const STAR_D2 = 'M11.5 4C12.6 5.9 13.1 7.9 14.3 9.7C16.2 9.4 18.5 10.1 20.3 10.4C18.6 11.5 17.3 13.5 15.5 14.4C16.5 16.2 16.4 18.5 17 19.6';
-const starSVG = cls => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true"><path d="${STAR_D}"/><path class="s2" d="${STAR_D2}"/></svg>`;
+const STAR_D = 'M40 121Q56 71 77 23Q85 70 95 115Q52 95 11 75Q60 67 112 61Q77 93 40 121';
+const starSVG = cls => `<svg class="${cls}" viewBox="3 15 117 114" aria-hidden="true"><path d="${STAR_D}"/></svg>`; // 한 번에 그린 손그림 별
 const isStar = k => (prefs.stars || []).includes(k);
 const holiday = k => { const a = holidaysOf(+k.slice(0, 4)).get(k); return a ? [...new Set(a)].join('·') : ''; };
 const MOON = '<svg class="moon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5" fill="currentColor"/></svg>';
@@ -970,7 +969,7 @@ function renderToday() {
   $('#today').innerHTML = `
     <div class="t-date">
       <div class="t-ym"><span>${t.getFullYear()}</span><b>${pad(t.getMonth() + 1)}</b></div>
-      <div class="t-day ${holiday(tk) ? 'hd' : ''}" ${holiday(tk) ? `title="${holiday(tk)}"` : ''}>${t.getDate()}</div>
+      <div class="t-day ${holiday(tk) ? 'hd' : ''}" ${holiday(tk) ? `title="${holiday(tk)}"` : ''}>${isStar(tk) ? starSVG('tstar') : ''}<span>${t.getDate()}</span></div>
       <div class="t-dow">${DOW[t.getDay()]}요일</div>
       <div class="t-add"><div class="msplit"><button data-new="event" data-d="${tk}">+ 일정</button><span class="div"></span><button data-new="task" data-d="${tk}">+ 할 일</button></div></div>
     </div>
