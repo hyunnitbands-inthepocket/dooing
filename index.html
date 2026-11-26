@@ -1439,6 +1439,17 @@ function applyTheme() {
 const initial = () => (prefs.name || '').trim().slice(0, 1) || '나';
 
 /* 메인 컬러: 연한 색은 글자로 쓸 때 진하게 섞어서 읽히게 */
+// 두 색이 눈에 얼마나 다르게 보이는지(CIE Lab 거리). 0이면 같은 색
+function colorGap(a, b) {
+  const lab = h => {
+    const n = parseInt(h.slice(1), 16), [r, g, bl] = [n >> 16, (n >> 8) & 255, n & 255].map(v => { v /= 255; return v > .04045 ? ((v + .055) / 1.055) ** 2.4 : v / 12.92; });
+    const f = t => t > .008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116;
+    const x = f((r * .4124 + g * .3576 + bl * .1805) / .95047), y = f(r * .2126 + g * .7152 + bl * .0722), z = f((r * .0193 + g * .1192 + bl * .9505) / 1.08883);
+    return [116 * y - 16, 500 * (x - y), 200 * (y - z)];
+  };
+  const p = lab(a), q = lab(b);
+  return Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]);
+}
 function applyMain() {
   let gated = false; try { gated = viewOnly(); } catch (e) {} // 로그인 전(첫 화면·둘러보기)은 저장된 색과 상관없이 기본색
   const c = gated ? DEFAULT_MAIN : (prefs.main || DEFAULT_MAIN), props = ['--accent', '--accent-soft', '--on-accent'];
@@ -1447,9 +1458,10 @@ function applyMain() {
     let h = d === 0 ? 0 : mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h = Math.round(((h * 60 + 360) % 360 + 180) % 360);
     const l = (mx + mn) / 2, sat = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
     ROOT.style.setProperty('--comp-h', h); ROOT.style.setProperty('--comp-s', Math.round(Math.min(70, Math.max(35, sat * 100))) + '%'); ROOT.style.setProperty('--comp-l', Math.round(Math.min(70, l * 100)) + '%');
-    // 오늘 날짜의 별: 보통은 코랄, 메인 컬러가 핑크·레드·오렌지 계열이면 겹치지 않게 연두
-    const mh = (h + 180) % 360, warm = sat >= .15 && (mh <= 45 || mh >= 310);
-    ROOT.style.setProperty('--today-star', warm ? '#7FB305' : '#F09A84'); }
+    // 오늘 날짜의 별: 코랄. 메인 컬러가 코랄과 구분이 잘 안 될 만큼 비슷하면(색 거리 25 미만) 더 진한 #D36F6F
+    // (메인이 #D36F6F 쪽에 더 가까우면 그대로 코랄 — 둘 중 메인과 더 먼 색을 씀)
+    const toCoral = colorGap(c, '#F09A84'), toDeep = colorGap(c, '#D36F6F');
+    ROOT.style.setProperty('--today-star', toCoral < 25 && toDeep > toCoral ? '#D36F6F' : '#F09A84'); }
   const light = !(gated || !prefs.main ? true : prefs.rawMain) && onColor(c) !== '#FFFFFF';
   ROOT.style.setProperty('--accent', light ? `color-mix(in srgb, ${c} 55%, var(--fg))` : c);
   ROOT.style.setProperty('--accent-soft', `color-mix(in srgb, ${c} 30%, var(--surface))`);
