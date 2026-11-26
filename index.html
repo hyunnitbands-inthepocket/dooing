@@ -320,11 +320,12 @@ body.row-dragging,body.row-dragging *{cursor:grabbing!important}
 .cell.sel{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--accent) 35%,transparent)}
 .dtop{display:flex;flex-direction:column;align-items:center;min-width:0;margin-bottom:2px}
 .dn{position:relative;isolation:isolate;display:inline-block;line-height:1}
-.dstar{position:absolute;z-index:-1;right:calc(100% - 3px);top:50%;width:17px;height:17px;transform:translateY(-62%);fill:none;stroke:var(--accent);stroke-width:10;stroke-linecap:round;stroke-linejoin:round;pointer-events:none;overflow:visible}
+.dstar{position:absolute;z-index:-1;right:calc(100% - 3px);top:50%;width:17px;height:17px;transform:translateY(-62%);fill:none;stroke:var(--accent);stroke-width:10;stroke-linecap:round;stroke-linejoin:round;pointer-events:none;overflow:visible;opacity:.7}
 .star-btn{width:28px;height:28px;margin-right:-2px;display:grid;place-items:center;border-radius:50%;color:var(--muted);flex:none}
 .star-btn:hover{background:var(--surface-2)}
 .star-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round}
 .star-btn.on svg{stroke:var(--accent);stroke-width:10}
+.t-day .tstar,.cell.today .dstar,.star-btn.on.is-today svg{stroke:var(--today-star,#F09A84)!important}
 .dnum{position:relative;font-family:var(--font-num);font-weight:600;font-size:13px;width:24px;height:24px;display:grid;place-items:center;border-radius:50%;flex:none}
 .cell.sun .dnum,.cell.hd .dnum{color:var(--sun)} .cell.sat .dnum{color:var(--sat)} .cell.sat.hd .dnum{color:var(--sun)}
 /* 오늘: 배경색 없이 칸 테두리를 메인 컬러로 살짝 두껍게 (선택 표시보다 위) */
@@ -1012,7 +1013,7 @@ function renderCal() {
 function absRect(el) { const r = el.getBoundingClientRect(); return { left: r.left + scrollX, top: r.top + scrollY, bottom: r.bottom + scrollY, width: r.width }; }
 function dayPopHTML() {
   const k = pop.day, items = dayItems(k);
-  return `<div class="pop-h">${viewOnly() ? '' : `<button class="star-btn ${isStar(k) ? 'on' : ''}" data-star="${k}" aria-pressed="${isStar(k)}" aria-label="중요한 날로 표시" title="중요한 날">${starSVG('')}</button>`}<h2 id="pop-h">${longDate(k)}</h2>${(l => l ? `<span class="sub">음력 ${l.leap ? '윤' : ''}${l.m}.${l.d}</span>` : '')(lunar(k))}${holiday(k) ? `<span class="sub" style="color:var(--sun)">${holiday(k)}</span>` : ''}<button class="x" data-pop="close" aria-label="닫기">×</button></div>
+  return `<div class="pop-h">${viewOnly() ? '' : `<button class="star-btn ${isStar(k) ? 'on' : ''} ${k === key(TODAY()) ? 'is-today' : ''}" data-star="${k}" aria-pressed="${isStar(k)}" aria-label="중요한 날로 표시" title="중요한 날">${starSVG('')}</button>`}<h2 id="pop-h">${longDate(k)}</h2>${(l => l ? `<span class="sub">음력 ${l.leap ? '윤' : ''}${l.m}.${l.d}</span>` : '')(lunar(k))}${holiday(k) ? `<span class="sub" style="color:var(--sun)">${holiday(k)}</span>` : ''}<button class="x" data-pop="close" aria-label="닫기">×</button></div>
     ${splitHTML(k, true)}
     ${items.length ? `<div class="pop-list">${listHTML(items, { tools: true })}</div>` : ''}`;
 }
@@ -1445,7 +1446,10 @@ function applyMain() {
   { const n = parseInt(c.slice(1), 16), r = (n >> 16) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
     let h = d === 0 ? 0 : mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h = Math.round(((h * 60 + 360) % 360 + 180) % 360);
     const l = (mx + mn) / 2, sat = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
-    ROOT.style.setProperty('--comp-h', h); ROOT.style.setProperty('--comp-s', Math.round(Math.min(70, Math.max(35, sat * 100))) + '%'); ROOT.style.setProperty('--comp-l', Math.round(Math.min(70, l * 100)) + '%'); }
+    ROOT.style.setProperty('--comp-h', h); ROOT.style.setProperty('--comp-s', Math.round(Math.min(70, Math.max(35, sat * 100))) + '%'); ROOT.style.setProperty('--comp-l', Math.round(Math.min(70, l * 100)) + '%');
+    // 오늘 날짜의 별: 보통은 코랄, 메인 컬러가 핑크·레드·오렌지 계열이면 겹치지 않게 연두
+    const mh = (h + 180) % 360, warm = sat >= .15 && (mh <= 45 || mh >= 310);
+    ROOT.style.setProperty('--today-star', warm ? '#7FB305' : '#F09A84'); }
   const light = !(gated || !prefs.main ? true : prefs.rawMain) && onColor(c) !== '#FFFFFF';
   ROOT.style.setProperty('--accent', light ? `color-mix(in srgb, ${c} 55%, var(--fg))` : c);
   ROOT.style.setProperty('--accent-soft', `color-mix(in srgb, ${c} 30%, var(--surface))`);
