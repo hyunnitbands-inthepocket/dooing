@@ -319,7 +319,13 @@ body.row-dragging,body.row-dragging *{cursor:grabbing!important}
 .cell.out .dnum{opacity:.45}
 .cell.sel{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--accent) 35%,transparent)}
 .dtop{display:flex;flex-direction:column;align-items:center;min-width:0;margin-bottom:2px}
-.dnum{font-family:var(--font-num);font-weight:600;font-size:13px;width:24px;height:24px;display:grid;place-items:center;border-radius:50%;flex:none}
+.dstar{position:absolute;right:calc(100% - 4px);top:50%;width:19px;height:19px;transform:translateY(-58%) rotate(-9deg);fill:rgb(255 196 61 / .3);stroke:#E0A100;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;pointer-events:none;overflow:visible}
+.dstar .s2,.star-btn .s2{fill:none;stroke-width:1.1;opacity:.6}
+.star-btn{width:28px;height:28px;margin-right:-2px;display:grid;place-items:center;border-radius:50%;color:var(--muted);flex:none}
+.star-btn:hover{background:var(--surface-2)}
+.star-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.star-btn.on svg{fill:rgb(255 196 61 / .35);stroke:#E0A100}
+.dnum{position:relative;font-family:var(--font-num);font-weight:600;font-size:13px;width:24px;height:24px;display:grid;place-items:center;border-radius:50%;flex:none}
 .cell.sun .dnum,.cell.hd .dnum{color:var(--sun)} .cell.sat .dnum{color:var(--sat)} .cell.sat.hd .dnum{color:var(--sun)}
 /* 오늘: 배경색 없이 칸 테두리를 메인 컬러로 살짝 두껍게 (선택 표시보다 위) */
 .cell.today{box-shadow:inset 0 0 0 2.5px var(--accent)}
@@ -736,6 +742,12 @@ function holidaysOf(y) {
   holCache.set(y, H);
   return H;
 }
+// 중요한 날: 손으로 그린 듯한 별. 날짜 목록은 prefs.stars에 저장(계정에도 같이 저장됨)
+const STAR_D = 'M12.4 2.9C13.3 5.2 14 7.1 14.9 8.8C17 8.9 19 9.1 21.2 9.6C19.5 11.2 17.9 12.6 16.2 13.9C16.8 16 17.3 18 17.7 20.4C15.7 19.3 14 18.1 12.1 16.9C10.3 18.2 8.5 19.4 6.3 20.6C6.8 18.3 7.5 16.3 8.2 14.2C6.6 12.9 5 11.6 3.2 9.8C5.4 9.5 7.5 9.4 9.6 9.3C10.4 7.3 11.2 5.3 12.9 2.6';
+// 겹선: 연필로 한 번 더 따라 그은 느낌
+const STAR_D2 = 'M11.5 4C12.6 5.9 13.1 7.9 14.3 9.7C16.2 9.4 18.5 10.1 20.3 10.4C18.6 11.5 17.3 13.5 15.5 14.4C16.5 16.2 16.4 18.5 17 19.6';
+const starSVG = cls => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true"><path d="${STAR_D}"/><path class="s2" d="${STAR_D2}"/></svg>`;
+const isStar = k => (prefs.stars || []).includes(k);
 const holiday = k => { const a = holidaysOf(+k.slice(0, 4)).get(k); return a ? [...new Set(a)].join('·') : ''; };
 const MOON = '<svg class="moon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5" fill="currentColor"/></svg>';
 const lunarHTML = k => {
@@ -989,8 +1001,8 @@ function renderCal() {
     const lim = allView || taskView ? 4 : 3;
     const more = items.length > lim ? `<span class="cmore">+${items.length - lim}개 더</span>` : '';
     const dots = items.slice(0, 4).map(x => (allView ? x.type === 'task' : taskView) ? '<i></i>' : '<i class="ev"></i>').join('');
-    html += `<button class="${cls}" data-day="${k}" aria-label="${longDate(k)}${holiday(k) ? ' ' + holiday(k) : ''}, ${allView ? '일정·할 일' : taskView ? '할 일' : '일정'} ${items.length}개">
-      <span class="dtop"><span class="dnum">${d.getDate()}</span>${holiday(k) ? `<span class="hol">${holiday(k)}</span>` : ''}${lunarHTML(k)}</span>
+    html += `<button class="${cls}" data-day="${k}" aria-label="${longDate(k)}${holiday(k) ? ' ' + holiday(k) : ''}${isStar(k) ? ' 중요한 날' : ''}, ${allView ? '일정·할 일' : taskView ? '할 일' : '일정'} ${items.length}개">
+      <span class="dtop"><span class="dnum">${isStar(k) ? starSVG('dstar') : ''}${d.getDate()}</span>${holiday(k) ? `<span class="hol">${holiday(k)}</span>` : ''}${lunarHTML(k)}</span>
       <span class="cchips">${chips}${more}</span><span class="dots">${dots}</span></button>`;
   }
   $('#grid').innerHTML = html;
@@ -1000,7 +1012,7 @@ function renderCal() {
 function absRect(el) { const r = el.getBoundingClientRect(); return { left: r.left + scrollX, top: r.top + scrollY, bottom: r.bottom + scrollY, width: r.width }; }
 function dayPopHTML() {
   const k = pop.day, items = dayItems(k);
-  return `<div class="pop-h"><h2 id="pop-h">${longDate(k)}</h2>${(l => l ? `<span class="sub">음력 ${l.leap ? '윤' : ''}${l.m}.${l.d}</span>` : '')(lunar(k))}${holiday(k) ? `<span class="sub" style="color:var(--sun)">${holiday(k)}</span>` : ''}<button class="x" data-pop="close" aria-label="닫기">×</button></div>
+  return `<div class="pop-h">${viewOnly() ? '' : `<button class="star-btn ${isStar(k) ? 'on' : ''}" data-star="${k}" aria-pressed="${isStar(k)}" aria-label="중요한 날로 표시" title="중요한 날">${starSVG('')}</button>`}<h2 id="pop-h">${longDate(k)}</h2>${(l => l ? `<span class="sub">음력 ${l.leap ? '윤' : ''}${l.m}.${l.d}</span>` : '')(lunar(k))}${holiday(k) ? `<span class="sub" style="color:var(--sun)">${holiday(k)}</span>` : ''}<button class="x" data-pop="close" aria-label="닫기">×</button></div>
     ${splitHTML(k, true)}
     ${items.length ? `<div class="pop-list">${listHTML(items, { tools: true })}</div>` : ''}`;
 }
@@ -1560,6 +1572,12 @@ document.addEventListener('click', e => {
   if (suppressClick) { suppressClick = false; return; }
   if (openRow && !e.target.closest('.t-del')) { const inside = openRow.contains(e.target); closeSwipe(); if (inside) return; }
   if (e.target.closest('#clip-cancel')) { clip = null; renderAll(); return; }
+  const star = e.target.closest('[data-star]');
+  if (star) {
+    const k = star.dataset.star, set = new Set(prefs.stars || []);
+    set.has(k) ? set.delete(k) : set.add(k);
+    prefs.stars = [...set].sort(); savePrefs(); renderAll(); return;
+  }
   const acc = e.target.closest('[data-acc]');
   if (acc) { accountAction(acc.dataset.acc, acc); return; }
   const cl = e.target.closest('[data-clip]');
@@ -1789,7 +1807,7 @@ function syncViewOnly() {
 // 보기 전용: 추가·수정·완료·삭제·끌어서 옮기기를 모두 막음 (화면에서도 숨기지만 한 번 더 막아 둠)
 document.addEventListener('click', e => {
   if (!viewOnly()) return;
-  if (e.target.closest('[data-new],[data-act]:not([data-act="login"]),[data-clip],[data-tid],[data-rep],[data-pop="save"],[data-pop="del"],#reset')) { e.preventDefault(); e.stopPropagation(); }
+  if (e.target.closest('[data-new],[data-act]:not([data-act="login"]),[data-clip],[data-tid],[data-rep],[data-pop="save"],[data-pop="del"],[data-star],#reset')) { e.preventDefault(); e.stopPropagation(); }
 }, true);
 document.addEventListener('pointerdown', e => {
   if (!viewOnly()) return;
