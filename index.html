@@ -258,6 +258,10 @@ body.row-dragging,body.row-dragging *{cursor:grabbing!important}
 .t-ev .bar{width:3px;height:15px;border-radius:2px;background:var(--c);flex:none}
 .t-ev.now .tm{color:var(--ev);font-weight:700}
 .t-up-block{grid-column:1/-1}
+.t-blocks.has-side{grid-template-columns:minmax(0,1fr) minmax(220px,32%)}
+.t-main{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:22px 32px;align-content:start;min-width:0}
+.t-up-block.side{grid-column:auto;border-left:1px solid var(--line);padding-left:24px}
+.t-up-block.side .t-list{display:flex;flex-direction:column}
 .t-up-block .t-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(5,auto);grid-auto-flow:column;column-gap:32px}
 @media (max-width:560px){.t-up-block .t-list{grid-template-columns:minmax(0,1fr);grid-template-rows:none;grid-auto-flow:row}}
 .t-up-block .t-item:nth-child(2){opacity:.93}.t-up-block .t-item:nth-child(3){opacity:.86}.t-up-block .t-item:nth-child(4){opacity:.79}.t-up-block .t-item:nth-child(5){opacity:.72}
@@ -492,6 +496,8 @@ body.pasting .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
   .t-blocks{display:contents}
   .t-blocks > .t-block{grid-column:1/-1}
   .t-blocks > .t-ev-block,.t-blocks > .t-up-block{grid-column:2;grid-row:1}
+  .t-blocks > .t-main{grid-column:1/-1;display:flex;flex-direction:column}
+  .t-blocks > .t-up-block.side{grid-column:2;grid-row:1;border-left:0;padding-left:0}
   .t-date{grid-column:1;grid-row:1}
   .t-day{font-size:56px}
   .t-add{margin-top:0;padding-top:14px}
@@ -916,6 +922,7 @@ function rowHTML(it, opt = {}) {
 const listHTML = (arr, opt) => `<ul class="list">${arr.map(i => rowHTML(i, opt)).join('')}</ul>`;
 
 /* ---------- today box ---------- */
+const NARROW = window.matchMedia('(max-width:760px)'); // 모바일 레이아웃 기준
 function renderToday() {
   const t = TODAY(), tk = key(t);
   const lateOpt = prefs.late || 'all', span = lateOpt === 'off' ? 0 : /^\d+$/.test(lateOpt) ? Number(lateOpt) : 14; // 설정(어제/그저께/2주/표시 안 함)이 지난 할 일과 예정된 일정의 범위를 함께 정함
@@ -950,22 +957,25 @@ function renderToday() {
   }).join('');
 
   // 오늘 아무것도 없으면 빈 채로 두지 않고 앞으로 예정된 일정·할 일을 보여줌
+  // 당일 등록된 일정·할 일이 한 열에 들어가는 개수(PC 5, 모바일 3) 이하면 오른쪽에 '예정된 일정'을 같이 보여줌
+  const sideMax = NARROW.matches ? 3 : 5, todayCount = events.length + tasks.length, empty = !evRows && !taskBlocks;
+  const upMax = empty ? 10 : sideMax;
   let upBlock = '';
-  if (!evRows && !taskBlocks) {
+  if (empty || todayCount <= sideMax) {
     const ups = [];
-    for (let n = 1; n <= 7 && ups.length < 10; n++) { // 예정된 일정은 설정과 상관없이 앞으로 일주일, 최대 10개
+    for (let n = 1; n <= 7 && ups.length < upMax; n++) { // 예정된 일정은 설정과 상관없이 앞으로 일주일
       const k = key(addDays(t, n));
       dayItems(k).forEach(x => ups.push({ ...x, date: k }));
     }
     const del = '<button class="t-del" data-act="del" aria-label="삭제" title="삭제"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9.5 7V4.8c0-.4.3-.8.8-.8h3.4c.5 0 .8.4.8.8V7M6.5 7l.8 12.1c.1.8.7 1.4 1.5 1.4h6.4c.8 0 1.4-.6 1.5-1.4L17.5 7M10 11v6M14 11v6"/></svg></button>';
-    const rows = ups.slice(0, 10).map(x => {
+    const rows = ups.slice(0, upMax).map(x => {
       const p = proj(x.project), c = p ? p.color : 'var(--accent)';
       const when = `<span class="t-meta up">${boxDate(x.date)}${x.time ? ' ' + x.time : ''}</span>`;
       return x.type === 'event'
         ? `<li class="t-item t-ev up" data-id="${x.id}"><div class="t-row"><span class="bar" style="--c:${p ? p.color : 'var(--ev)'}"></span>${when}<button class="t-title" data-act="edit">${esc(x.title)}</button></div>${del}</li>`
         : `<li class="t-item tk up ${x.done ? 'done' : ''}" data-id="${x.id}" style="--c:${c};--oc:${onColor(c)}"><div class="t-row"><button class="box" data-act="toggle" aria-label="${x.done ? '완료 취소' : '완료로 표시'}">${IC.check}</button>${when}<button class="t-title" data-act="edit">${esc(x.title)}</button></div>${del}</li>`;
     }).join('');
-    if (rows) upBlock = `<div class="t-block t-up-block"><span class="t-label up">예정된 일정</span><ul class="t-list">${rows}</ul></div>`;
+    if (rows) upBlock = `<div class="t-block t-up-block ${empty ? '' : 'side'}"><span class="t-label up">예정된 일정</span><ul class="t-list">${rows}</ul></div>`;
   }
 
   $('#today').innerHTML = `
@@ -975,7 +985,7 @@ function renderToday() {
       <div class="t-dow">${DOW[t.getDay()]}요일</div>
       <div class="t-add"><div class="msplit"><button data-new="event" data-d="${tk}">+ 일정</button><span class="div"></span><button data-new="task" data-d="${tk}">+ 할 일</button></div></div>
     </div>
-    <div class="t-blocks">${evBlock}${taskBlocks}${upBlock}</div>`;
+    ${!empty && upBlock ? `<div class="t-blocks has-side"><div class="t-main">${evBlock}${taskBlocks}</div>${upBlock}</div>` : `<div class="t-blocks">${evBlock}${taskBlocks}${upBlock}</div>`}`;
 }
 
 /* ---------- calendar ---------- */
@@ -1952,6 +1962,7 @@ const data = load();
 state.items = data.items; state.projects = data.projects;
 const t0 = TODAY();
 state.calMonth = new Date(t0.getFullYear(), t0.getMonth(), 1);
+NARROW.addEventListener('change', () => renderToday());
 applyTheme();
 applyMain();
 renderAll();
