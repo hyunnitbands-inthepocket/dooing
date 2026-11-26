@@ -256,6 +256,8 @@ body.swiping-row{user-select:none;-webkit-user-select:none}
 body.row-dragging,body.row-dragging *{cursor:grabbing!important}
 .t-ev .tm{width:40px;flex:none;font-family:var(--font-num);font-size:12.5px;color:var(--muted)}
 .t-ev .bar{width:3px;height:15px;border-radius:2px;background:var(--c);flex:none}
+#today .t-ev .ev-ic{color:var(--c)} /* 생일·시험 아이콘은 앞의 구분선과 같은 색 */
+#today .t-ev .t-row>.ev-ic{margin-right:-5px}
 .t-ev.now .tm{color:var(--ev);font-weight:700}
 .t-up-block{grid-column:1/-1}
 .t-blocks.has-side{grid-template-columns:minmax(0,1fr) minmax(220px,32%)}
@@ -363,7 +365,7 @@ body.row-dragging,body.row-dragging *{cursor:grabbing!important}
 .tseg::before{content:"";position:absolute;z-index:-1;top:3px;bottom:3px;left:3px;width:calc(33.333% - 2px);border-radius:999px;background:var(--accent);box-shadow:0 1px 3px rgb(16 24 32 / .18);transition:transform .2s ease}
 .tseg:has(button:nth-child(2).on)::before{transform:translateX(100%)}
 .tseg:has(button:nth-child(3).on)::before{transform:translateX(200%)}
-.tseg button{padding:0 14px;font-size:12px;font-weight:600;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;border-radius:999px;transition:color .2s}
+.tseg button{white-space:nowrap;padding:0 14px;font-size:12px;font-weight:600;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;border-radius:999px;transition:color .2s}
 .tseg button.on{color:var(--on-accent);font-weight:700}
 .cmore{font-size:11px;color:var(--muted);padding-left:5px}
 .dots{display:none;gap:3px;justify-content:center;flex-wrap:wrap}
@@ -935,7 +937,7 @@ function renderToday() {
   const evRows = events.map(e => {
     const p = proj(e.project), st = e.time ? toMin(e.time) : 0, en = e.time ? toMin(endTime(e.time, e.dur)) : 0;
     const cls = !e.time ? 'ad' : en < nowM ? 'past' : (st <= nowM ? 'now' : '');
-    return `<li class="t-item t-ev ${cls}" data-id="${e.id}"><div class="t-row"><span class="tm">${e.time || evIcon(e) || 'all day'}</span><span class="bar" style="--c:${p ? p.color : 'var(--ev)'}"></span><button class="t-title" data-act="edit">${esc(e.title)}</button></div><button class="t-del" data-act="del" aria-label="삭제" title="삭제"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9.5 7V4.8c0-.4.3-.8.8-.8h3.4c.5 0 .8.4.8.8V7M6.5 7l.8 12.1c.1.8.7 1.4 1.5 1.4h6.4c.8 0 1.4-.6 1.5-1.4L17.5 7M10 11v6M14 11v6"/></svg></button></li>`;
+    return `<li class="t-item t-ev ${cls}" data-id="${e.id}" style="--c:${p ? p.color : 'var(--ev)'}"><div class="t-row"><span class="tm">${e.time || evIcon(e) || 'all day'}</span><span class="bar" style="--c:${p ? p.color : 'var(--ev)'}"></span>${e.time ? evIcon(e) : ''}<button class="t-title" data-act="edit">${esc(e.title)}</button></div><button class="t-del" data-act="del" aria-label="삭제" title="삭제"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9.5 7V4.8c0-.4.3-.8.8-.8h3.4c.5 0 .8.4.8.8V7M6.5 7l.8 12.1c.1.8.7 1.4 1.5 1.4h6.4c.8 0 1.4-.6 1.5-1.4L17.5 7M10 11v6M14 11v6"/></svg></button></li>`;
   }).join('');
   const evBlock = !evRows ? '' : `<div class="t-block t-ev-block"><button class="t-label" style="--c:var(--accent)" data-new="event" data-d="${tk}" aria-label="오늘 일정 추가">일정</button>
     <ul class="t-list">${evRows}</ul></div>`;
@@ -972,7 +974,7 @@ function renderToday() {
       const p = proj(x.project), c = p ? p.color : 'var(--accent)';
       const when = `<span class="t-meta up">${boxDate(x.date)}${x.time ? ' ' + x.time : ''}</span>`;
       return x.type === 'event'
-        ? `<li class="t-item t-ev up" data-id="${x.id}"><div class="t-row"><span class="bar" style="--c:${p ? p.color : 'var(--ev)'}"></span>${when}<button class="t-title" data-act="edit">${esc(x.title)}</button></div>${del}</li>`
+        ? `<li class="t-item t-ev up" data-id="${x.id}" style="--c:${p ? p.color : 'var(--ev)'}"><div class="t-row"><span class="bar" style="--c:${p ? p.color : 'var(--ev)'}"></span>${when}${evIcon(x)}<button class="t-title" data-act="edit">${esc(x.title)}</button></div>${del}</li>`
         : `<li class="t-item tk up ${x.done ? 'done' : ''}" data-id="${x.id}" style="--c:${c};--oc:${onColor(c)}"><div class="t-row"><button class="box" data-act="toggle" aria-label="${x.done ? '완료 취소' : '완료로 표시'}">${IC.check}</button>${when}<button class="t-title" data-act="edit">${esc(x.title)}</button></div>${del}</li>`;
     }).join('');
     if (rows) upBlock = `<div class="t-block t-up-block ${empty ? '' : 'side'}"><span class="t-label up">예정된 일정</span><ul class="t-list">${rows}</ul></div>`;
