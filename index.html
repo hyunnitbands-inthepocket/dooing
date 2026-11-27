@@ -269,6 +269,9 @@ body.row-dragging,body.row-dragging *{cursor:grabbing!important}
 @media (max-width:560px){.t-up-block .t-list{grid-template-columns:minmax(0,1fr);grid-template-rows:none;grid-auto-flow:row}}
 .t-up-block .t-item:nth-child(2){opacity:.93}.t-up-block .t-item:nth-child(3){opacity:.86}.t-up-block .t-item:nth-child(4){opacity:.79}.t-up-block .t-item:nth-child(5){opacity:.72}
 .t-up-block .t-item:nth-child(6){opacity:.65}.t-up-block .t-item:nth-child(7){opacity:.58}.t-up-block .t-item:nth-child(8){opacity:.5}.t-up-block .t-item:nth-child(9){opacity:.42}.t-up-block .t-item:nth-child(10){opacity:.34}
+/* 오늘 항목 옆에 뜨는 예정(side)은 흐리게 하지 않고 선명하게 (빈 날 전체 목록만 뒤로 갈수록 흐려짐) */
+.t-up-block.side .t-item{opacity:1}
+.t-up-block.side .t-item:not(.done) .t-title{color:var(--fg)}
 /* 체크한 오늘·예정 할 일은 사라지지 않고 취소선 + 확 흐리게 (지난 할 일만 체크하면 사라짐) */
 .t-item.tk.done,.t-up-block .t-item.tk.done{opacity:.3}
 .t-label.up{background:none;color:hsl(var(--comp-h,350) var(--comp-s,40%) var(--comp-l,66%));padding-left:0;font-weight:600}
