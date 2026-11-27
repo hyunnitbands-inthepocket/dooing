@@ -258,6 +258,7 @@ body.row-dragging,body.row-dragging *{cursor:grabbing!important}
 .t-ev .bar{width:3px;height:15px;border-radius:2px;background:var(--c);flex:none}
 #today .t-ev .ev-ic{color:var(--c)} /* 생일·시험 아이콘은 앞의 구분선과 같은 색 */
 #today .t-ev .t-row>.ev-ic{margin-right:-5px}
+#today .ic-slot{width:16px;flex:none;display:flex;justify-content:center;margin-right:-3px}
 .t-ev.now .tm{color:var(--ev);font-weight:700}
 .t-up-block{grid-column:1/-1}
 .t-blocks.has-side{grid-template-columns:minmax(0,1fr) minmax(220px,32%)}
@@ -970,12 +971,15 @@ function renderToday() {
       dayItems(k).forEach(x => ups.push({ ...x, date: k }));
     }
     const del = '<button class="t-del" data-act="del" aria-label="삭제" title="삭제"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9.5 7V4.8c0-.4.3-.8.8-.8h3.4c.5 0 .8.4.8.8V7M6.5 7l.8 12.1c.1.8.7 1.4 1.5 1.4h6.4c.8 0 1.4-.6 1.5-1.4L17.5 7M10 11v6M14 11v6"/></svg></button>';
+    // 아이콘 자리: 하나라도 아이콘이 있으면 모든 줄에 같은 폭을 비워 구분선·체크박스 줄을 맞춤
+    const anyIc = ups.slice(0, upMax).some(x => evIcon(x));
+    const slot = x => anyIc ? `<span class="ic-slot">${evIcon(x)}</span>` : '';
     const rows = ups.slice(0, upMax).map(x => {
       const p = proj(x.project), c = p ? p.color : 'var(--accent)';
       const when = `<span class="t-meta up">${boxDate(x.date)}${x.time ? ' ' + x.time : ''}</span>`;
       return x.type === 'event'
-        ? `<li class="t-item t-ev up" data-id="${x.id}" style="--c:${p ? p.color : 'var(--ev)'}"><div class="t-row"><span class="bar" style="--c:${p ? p.color : 'var(--ev)'}"></span>${when}${evIcon(x)}<button class="t-title" data-act="edit">${esc(x.title)}</button></div>${del}</li>`
-        : `<li class="t-item tk up ${x.done ? 'done' : ''}" data-id="${x.id}" style="--c:${c};--oc:${onColor(c)}"><div class="t-row"><button class="box" data-act="toggle" aria-label="${x.done ? '완료 취소' : '완료로 표시'}">${IC.check}</button>${when}<button class="t-title" data-act="edit">${esc(x.title)}</button></div>${del}</li>`;
+        ? `<li class="t-item t-ev up" data-id="${x.id}" style="--c:${p ? p.color : 'var(--ev)'}"><div class="t-row">${slot(x)}<span class="bar" style="--c:${p ? p.color : 'var(--ev)'}"></span>${when}<button class="t-title" data-act="edit">${esc(x.title)}</button></div>${del}</li>`
+        : `<li class="t-item tk up ${x.done ? 'done' : ''}" data-id="${x.id}" style="--c:${c};--oc:${onColor(c)}"><div class="t-row">${slot(x)}<button class="box" data-act="toggle" aria-label="${x.done ? '완료 취소' : '완료로 표시'}">${IC.check}</button>${when}<button class="t-title" data-act="edit">${esc(x.title)}</button></div>${del}</li>`;
     }).join('');
     if (rows) upBlock = `<div class="t-block t-up-block ${empty ? '' : 'side'}"><span class="t-label up">예정된 일정</span><ul class="t-list">${rows}</ul></div>`;
   }
